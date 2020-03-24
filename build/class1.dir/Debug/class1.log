@@ -1,6 +1,10 @@
-﻿  skeleton.cpp
-skeleton.cpp(73): warning C4018: '<': signed/unsigned mismatch
-skeleton.cpp(82): warning C4018: '<': signed/unsigned mismatch
-skeleton.cpp(139): warning C4018: '<': signed/unsigned mismatch
-c:\users\paulo\onedrive\ambiente de trabalho\escola\lei\build\skeleton.cpp(253): warning C4715: 'skeleton::getEndEffector': not all control paths return a value
-  class1.vcxproj -> C:\Users\paulo\OneDrive\Ambiente de Trabalho\Escola\LEI\build\Debug\class1.exe
+﻿  Building Custom Rule C:/Users/paulo/OneDrive/Ambiente de Trabalho/Escola/LEI/Lei2020/CMakeLists.txt
+  main.cpp
+  LINK : C:\Users\paulo\OneDrive\Ambiente de Trabalho\Escola\LEI\Lei2020\build\Debug\class1.exe not found or not built by the last incremental link; performing full link
+main.obj : error LNK2019: unresolved external symbol "public: void __thiscall skeleton::addChildren(float * const)" (?addChildren@skeleton@@QAEXQAM@Z) referenced in function _main
+main.obj : error LNK2019: unresolved external symbol "public: void __thiscall skeleton::draw(void)" (?draw@skeleton@@QAEXXZ) referenced in function "void __cdecl renderScene(void)" (?renderScene@@YAXXZ)
+main.obj : error LNK2019: unresolved external symbol "public: void __thiscall skeleton::setTarget(float,float,float)" (?setTarget@skeleton@@QAEXMMM@Z) referenced in function _main
+main.obj : error LNK2019: unresolved external symbol "public: void __thiscall skeleton::multiUpdate(void)" (?multiUpdate@skeleton@@QAEXXZ) referenced in function "void __cdecl renderScene(void)" (?renderScene@@YAXXZ)
+main.obj : error LNK2019: unresolved external symbol "public: void __thiscall skeleton::getAllSkeleton(class std::vector<class skeleton *,class std::allocator<class skeleton *> > *)" (?getAllSkeleton@skeleton@@QAEXPAV?$vector@PAVskeleton@@V?$allocator@PAVskeleton@@@std@@@std@@@Z) referenced in function "void __cdecl renderScene(void)" (?renderScene@@YAXXZ)
+main.obj : error LNK2019: unresolved external symbol "public: __thiscall skeleton::skeleton(float * const,float * const)" (??0skeleton@@QAE@QAM0@Z) referenced in function _main
+C:\Users\paulo\OneDrive\Ambiente de Trabalho\Escola\LEI\Lei2020\build\Debug\class1.exe : fatal error LNK1120: 6 unresolved externals

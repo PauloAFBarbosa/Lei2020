@@ -1,22 +1,33 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
-    <ClCompile Include="C:\Users\paulo\OneDrive\Ambiente de Trabalho\Escola\LEI\main.cpp">
+    <ClCompile Include="C:\Users\paulo\OneDrive\Ambiente de Trabalho\Escola\LEI\Lei2020\main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Bone.cpp" />
-    <ClCompile Include="skeleton.cpp" />
+    <ClCompile Include="C:\Users\paulo\OneDrive\Ambiente de Trabalho\Escola\LEI\Lei2020\build\Bone.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\paulo\OneDrive\Ambiente de Trabalho\Escola\LEI\Lei2020\build\skeleton.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <CustomBuild Include="C:\Users\paulo\OneDrive\Ambiente de Trabalho\Escola\LEI\CMakeLists.txt" />
+    <ClInclude Include="C:\Users\paulo\OneDrive\Ambiente de Trabalho\Escola\LEI\Lei2020\build\Bone.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Users\paulo\OneDrive\Ambiente de Trabalho\Escola\LEI\Lei2020\build\skeleton.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <Filter Include="Source Files">
-      <UniqueIdentifier>{F5C0ED8B-2429-3950-979B-A7AD12A7F8D6}</UniqueIdentifier>
+    <CustomBuild Include="C:\Users\paulo\OneDrive\Ambiente de Trabalho\Escola\LEI\Lei2020\CMakeLists.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{892AB89A-E795-3AF2-86E0-B4D868092299}</UniqueIdentifier>
     </Filter>
-  </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="Bone.h" />
-    <ClInclude Include="skeleton.h" />
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{996DE44D-3C55-3BC7-84A0-D5EAEFE59445}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
 </Project>

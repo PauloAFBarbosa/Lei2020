@@ -1,0 +1,6 @@
+﻿  skeleton.cpp
+skeleton.cpp(73): warning C4018: '<': signed/unsigned mismatch
+skeleton.cpp(82): warning C4018: '<': signed/unsigned mismatch
+skeleton.cpp(139): warning C4018: '<': signed/unsigned mismatch
+c:\users\paulo\onedrive\ambiente de trabalho\escola\lei\build\skeleton.cpp(253): warning C4715: 'skeleton::getEndEffector': not all control paths return a value
+  class1.vcxproj -> C:\Users\paulo\OneDrive\Ambiente de Trabalho\Escola\LEI\build\Debug\class1.exe

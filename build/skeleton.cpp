@@ -145,7 +145,7 @@ void skeleton::update(float target[3],float * return_effector)
 					all.at(i - 1)->me->end[1] = temp2;
 					all.at(i - 1)->me->end[2] = temp3;
 				}
-				else {
+				else if(return_effector!=NULL){
 					return_effector[0] = all.at(i)->me->start[0];
 					return_effector[1] = all.at(i)->me->start[1];
 					return_effector[2] = all.at(i)->me->start[2];
@@ -213,6 +213,9 @@ void skeleton::tempSkeleton(int path, skeleton * ret) {
 
 void skeleton::multiUpdate()
 {
+	float finalx ;
+	float finaly ;
+	float finalz ;
 	//get all endpoints
 	std::vector<skeleton *> endPoints;
 	//printf("Vai buscar endpoints\n");
@@ -314,9 +317,9 @@ void skeleton::multiUpdate()
 			sumy += positions.at(i+1);
 			sumz += positions.at(i+2);
 		}
-		float finalx = sumx / (i / 3);
-		float finaly = sumy / (i / 3);
-		float finalz = sumz / (i / 3);
+		finalx = sumx / (i / 3);
+		finaly = sumy / (i / 3);
+		finalz = sumz / (i / 3);
 
 		
 		//Agora tenho de escolher o ponto que fica na linha entre o start da bifurcação e o centroid. e que respeite o size
@@ -381,9 +384,13 @@ void skeleton::multiUpdate()
 		}
 
 	}
-	float *target[3];
-	this->getTarget(target);
-	this->update(*target,NULL);
+	float target[3];
+	//this->getTarget(target);
+	(target)[0] = finalx;
+	(target)[1] = finaly;
+	(target)[2] = finalz;
+	printf("Target -> %f %f %f\n", (target)[0], (target)[1], (target)[2]);
+	this->update(target,NULL);
 	
 }
 

@@ -50,20 +50,29 @@ void skeleton::getTarget(float * target[3])
 
 void skeleton::getEndPoints(std::vector<skeleton*> * endpoints)
 {	
-	printf("Tenho %d filhos \n", this->children.size());
+	
 	for each (skeleton * s in this->children)
 	{
 		s->getEndPoints(endpoints);
 	}
 	if (this->children.size() == 0) {
-		printf("WEEEEEEEEEEEEEEEEEE\n");
+		
 		endpoints->push_back(this);
 		
 	}
 
 }
 
-void skeleton::update(float target[3])
+void skeleton::backward() {
+	
+}
+
+void skeleton::forward() {
+
+}
+
+//O return effector vai devolver a root da sub tree para ser utilizado em arvores com varios ramos talvez mude depois
+void skeleton::update(float target[3],float * return_effector)
 {
 	std::vector<skeleton *> all;
 	this->getAllSkeleton(&all);
@@ -111,27 +120,41 @@ void skeleton::update(float target[3])
 			s_aux->me->end[2] = target[2];
 
 			//Forward
-			int i = all.size() - 2;
+			int i = all.size() - 1;
+
+			all.at(i)->me->end[0] = target[0];
+			all.at(i)->me->end[1] = target[1];
+			all.at(i)->me->end[2] = target[2];
 
 			for (i; i>=0; i--)
 			{
-				float r = distance(all.at(i+1)->me->end, all.at(i)->me->end);
-				float y = all.at(i+1)->me->size/ r;
+				float r = distance(all.at(i)->me->end, all.at(i)->me->start);
+				float y = all.at(i)->me->size/ r;
 
 				float temp1, temp2, temp3;
-				temp1 = (1 - y)*all.at(i + 1)->me->end[0] + y * all.at(i)->me->end[0];
-				temp2= (1 - y)*all.at(i + 1)->me->end[1] + y * all.at(i)->me->end[1];
-				temp3= (1 - y)*all.at(i + 1)->me->end[2] + y * all.at(i)->me->end[2];
-				all.at(i)->me->end[0] = temp1;
-				all.at(i)->me->end[1] = temp2;
-				all.at(i)->me->end[2] = temp3;
+				temp1 = (1 - y)*all.at(i)->me->end[0] + y * all.at(i)->me->start[0];
+				temp2= (1 - y)*all.at(i)->me->end[1] + y * all.at(i)->me->start[1];
+				temp3= (1 - y)*all.at(i)->me->end[2] + y * all.at(i)->me->start[2];
+				all.at(i)->me->start[0] = temp1;
+				all.at(i)->me->start[1] = temp2;
+				all.at(i)->me->start[2] = temp3;
 
-				all.at(i+1)->me->start[0]= temp1;
-				all.at(i + 1)->me->start[1] = temp2;
-				all.at(i + 1)->me->start[2] = temp3;
+				
+				if (i != 0) {
+					all.at(i - 1)->me->end[0] = temp1;
+					all.at(i - 1)->me->end[1] = temp2;
+					all.at(i - 1)->me->end[2] = temp3;
+				}
+				else {
+					return_effector[0] = all.at(i)->me->start[0];
+					return_effector[1] = all.at(i)->me->start[1];
+					return_effector[2] = all.at(i)->me->start[2];
+				}
+				
 			}
 
 			//backward
+			
 			all.at(0)->me->start[0] = b[0];
 			all.at(0)->me->start[1] = b[1];
 			all.at(0)->me->start[2] = b[2];
@@ -154,6 +177,7 @@ void skeleton::update(float target[3])
 				all.at(i+1)->me->start[0] = temp1;
 				all.at(i+1)->me->start[1] = temp2;
 				all.at(i+1)->me->start[2] = temp3;
+				
 			}
 
 			end =(all.at(all.size()-1))->me->end;
@@ -167,6 +191,26 @@ void skeleton::update(float target[3])
 	
 }
 
+void skeleton::tempSkeleton(int path, skeleton * ret) {
+	
+	skeleton * aux = this;
+	while (aux->children.empty()==false)
+	{
+		if (aux->children.size() == 1) {
+			ret->addChildren(aux->children.at(0)->me->end);
+			ret->setTarget(aux->children.at(0)->target[0], aux->children.at(0)->target[1], aux->children.at(0)->target[2]);
+			aux = aux->children.at(0);
+		}
+		else {
+			ret->addChildren(aux->children.at(path)->me->end);
+			ret->setTarget(aux->children.at(path)->target[0], aux->children.at(path)->target[1], aux->children.at(path)->target[2]);
+			aux = aux->children.at(path);
+			
+		}
+	}
+	
+}
+
 void skeleton::multiUpdate()
 {
 	//get all endpoints
@@ -174,19 +218,21 @@ void skeleton::multiUpdate()
 	//printf("Vai buscar endpoints\n");
 	this->getEndPoints(&endPoints);
 	//printf("Tem %d endpoints\n", endPoints.size());
+	float endeffector[3] = {-999,-999,-999};
 	
 
 	//No caso se ser um skeleton apenas com um endpoint nao precisa fazer o while
 	if (endPoints.size() == 1) {
 		float * target[3];
 		this->getTarget(target);
-		this->update(*target);
+		
+		this->update(*target, endeffector);
 		return;
 	}
 
 	while (!endPoints.empty())
 	{
-		printf("Vai fazer coisas no while :D\n");
+		
 		//vai buscar o primeiro elemento e apaga-o
 		skeleton * s_aux = endPoints.at(0);
 		skeleton * last=NULL;
@@ -194,7 +240,7 @@ void skeleton::multiUpdate()
 		
 		while (s_aux->parent!=NULL && s_aux->children.size()<=1)
 		{
-			printf("Dentro do while interior \n");
+			
 			last = s_aux;
 			s_aux = s_aux->parent;
 			
@@ -202,25 +248,143 @@ void skeleton::multiUpdate()
 		
 		//varias posições para a root (vai ser usado para fazer a media depois)
 		std::vector<float> positions;
-
+		
 		for each (skeleton * s in s_aux->children)
 		{
 			//printf("Vai procurar os filhos\n");
 			//vai apenas chamar o update no children pelo qual ele veio comparando os entereços de memoria
-			if (s == last) {
-				printf("Vai fazer um update ()\n");
-				float * target[3];
-				s->getTarget(target);
-				//printf("O target vai ser %f %f %f \n", (*target)[0], (*target)[1], (*target)[2]);
-				s->update(*target);
-				endPoints.push_back(s_aux);
-				
+			std::vector<skeleton *> all;
+			s->getAllSkeleton(&all);
+
+			float *target[3];
+			s->getTarget(target);
+			
+			skeleton * s_aux = all.at(all.size() - 1);
+			//pn=target
+			s_aux->me->end[0] = (*target)[0];
+			s_aux->me->end[1] = (*target)[1];
+			s_aux->me->end[2] = (*target)[2];
+
+			//Forward
+			int i = all.size() - 1;
+
+			all.at(i)->me->end[0] = (*target)[0];
+			all.at(i)->me->end[1] = (*target)[1];
+			all.at(i)->me->end[2] = (*target)[2];
+
+			for (i; i >= 0; i--)
+			{
+				float r = distance(all.at(i)->me->end, all.at(i)->me->start);
+				float y = all.at(i)->me->size / r;
+
+				float temp1, temp2, temp3;
+				temp1 = (1 - y)*all.at(i)->me->end[0] + y * all.at(i)->me->start[0];
+				temp2 = (1 - y)*all.at(i)->me->end[1] + y * all.at(i)->me->start[1];
+				temp3 = (1 - y)*all.at(i)->me->end[2] + y * all.at(i)->me->start[2];
+				all.at(i)->me->start[0] = temp1;
+				all.at(i)->me->start[1] = temp2;
+				all.at(i)->me->start[2] = temp3;
+
+
+				if (i != 0) {
+					all.at(i - 1)->me->end[0] = temp1;
+					all.at(i - 1)->me->end[1] = temp2;
+					all.at(i - 1)->me->end[2] = temp3;
+				}
+				else {
+					positions.push_back(all.at(i)->me->start[0]);
+					positions.push_back(all.at(i)->me->start[1]);
+					positions.push_back(all.at(i)->me->start[2]);
+					
+
+				}
+
+			}
+			
+		}
+		//calcular o centroid
+		float sumx=0;
+		float sumy=0;
+		float sumz=0;
+		float i = 0;
+		for (i = 0; i < positions.size(); i+=3)
+		{
+			
+			sumx +=positions.at(i);
+			sumy += positions.at(i+1);
+			sumz += positions.at(i+2);
+		}
+		float finalx = sumx / (i / 3);
+		float finaly = sumy / (i / 3);
+		float finalz = sumz / (i / 3);
+
+		
+		//Agora tenho de escolher o ponto que fica na linha entre o start da bifurcação e o centroid. e que respeite o size
+		float vector[3];
+		vector[0] = finalx - s_aux->me->start[0];
+		vector[1] = finaly - s_aux->me->start[1];
+		vector[2] = finalz - s_aux->me->start[2];
+		float magnitude = sqrtf(powf(vector[0], 2) + powf(vector[1], 2) + powf(vector[2], 2));
+		
+		vector[0] = vector[0] / magnitude;
+		vector[1] = vector[1] / magnitude;
+		vector[2] = vector[2] / magnitude;
+		
+
+		s_aux->me->end[0] = s_aux->me->start[0]+vector[0]*s_aux->me->size;
+		s_aux->me->end[1] = s_aux->me->start[1] + vector[1] * s_aux->me->size;
+		s_aux->me->end[2] = s_aux->me->start[2] + vector[2] * s_aux->me->size;
+		//por todos os filhos com a mesma posição
+		for each (skeleton * s in s_aux->children)
+		{
+			s->me->start[0] = s_aux->me->end[0];
+			s->me->start[0] = s_aux->me->end[1];
+			s->me->start[0] = s_aux->me->end[2];
+		}
+
+		for each (skeleton * s in s_aux->children)
+		{
+			
+			//backward
+			std::vector<skeleton *> all;
+			s->getAllSkeleton(&all);
+
+			float *target[3];
+			s->getTarget(target);
+
+			
+
+			all.at(0)->me->start[0] = s_aux->me->end[0];
+			all.at(0)->me->start[1] = s_aux->me->end[1];
+			all.at(0)->me->start[2] = s_aux->me->end[2];
+
+			for (i = 0; i < all.size() - 1; i++)
+			{
+				float r = distance(all.at(i)->me->start, all.at(i)->me->end);
+				float y = all.at(i)->me->size / r;
+
+				float temp1, temp2, temp3;
+
+				temp1 = (1 - y)*all.at(i)->me->start[0] + y * all.at(i)->me->end[0];
+				temp2 = (1 - y)*all.at(i)->me->start[1] + y * all.at(i)->me->end[1];
+				temp3 = (1 - y)*all.at(i)->me->start[2] + y * all.at(i)->me->end[2];
+
+				all.at(i)->me->end[0] = temp1;
+				all.at(i)->me->end[1] = temp2;
+				all.at(i)->me->end[2] = temp3;
+
+				all.at(i + 1)->me->start[0] = temp1;
+				all.at(i + 1)->me->start[1] = temp2;
+				all.at(i + 1)->me->start[2] = temp3;
+
 			}
 		}
 
-
 	}
-	printf("Acabou o multiupdate\n");
+	float *target[3];
+	this->getTarget(target);
+	this->update(*target,NULL);
+	
 }
 
 
@@ -232,10 +396,8 @@ float skeleton::distance(float p1[3], float p2[3])
 float skeleton::totalSize()
 {
 	float result = this->me->size;
-	for each (skeleton * s in this->children)
-	{
-		result += s->totalSize();
-	}
+	if(this->children.size()==1)
+		result += this->children.at(0)->totalSize();
 	
 	return result;
 }
@@ -257,7 +419,10 @@ void skeleton::getAllSkeleton(std::vector<skeleton*> * ret)
 	ret->push_back(this);
 	if (this->children.empty())
 		return;
-	this->children.at(0)->getAllSkeleton(ret);
+	if (this->children.size() == 1) {
+		this->children.at(0)->getAllSkeleton(ret);
+	}
+	
 }
 
 skeleton::skeleton(float in_start[3], float in_end[3])

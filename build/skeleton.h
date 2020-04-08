@@ -10,13 +10,17 @@ public:
 	float target[3];
 	Bone* me;
 	skeleton* parent;
+
 	void addChildren(float in_end[3]);
 	void setParent(skeleton * s);
 	void draw();
 	void setTarget(float x,float y,float z);
 	void getTarget(float * target[3]);
 	void getEndPoints(std::vector<skeleton *> * endpoints);
-	void update(float target[3]);
+	void backward();
+	void forward();
+	void update(float target[3], float * return_effector);
+	void tempSkeleton(int path, skeleton * ret);
 	void multiUpdate();
 	float distance(float p1[3], float p2[3]);
 	float totalSize();

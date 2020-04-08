@@ -1,10 +1,20 @@
-﻿  Building Custom Rule C:/Users/paulo/OneDrive/Ambiente de Trabalho/Escola/LEI/Lei2020/CMakeLists.txt
-  main.cpp
-  LINK : C:\Users\paulo\OneDrive\Ambiente de Trabalho\Escola\LEI\Lei2020\build\Debug\class1.exe not found or not built by the last incremental link; performing full link
-main.obj : error LNK2019: unresolved external symbol "public: void __thiscall skeleton::addChildren(float * const)" (?addChildren@skeleton@@QAEXQAM@Z) referenced in function _main
-main.obj : error LNK2019: unresolved external symbol "public: void __thiscall skeleton::draw(void)" (?draw@skeleton@@QAEXXZ) referenced in function "void __cdecl renderScene(void)" (?renderScene@@YAXXZ)
-main.obj : error LNK2019: unresolved external symbol "public: void __thiscall skeleton::setTarget(float,float,float)" (?setTarget@skeleton@@QAEXMMM@Z) referenced in function _main
-main.obj : error LNK2019: unresolved external symbol "public: void __thiscall skeleton::multiUpdate(void)" (?multiUpdate@skeleton@@QAEXXZ) referenced in function "void __cdecl renderScene(void)" (?renderScene@@YAXXZ)
-main.obj : error LNK2019: unresolved external symbol "public: void __thiscall skeleton::getAllSkeleton(class std::vector<class skeleton *,class std::allocator<class skeleton *> > *)" (?getAllSkeleton@skeleton@@QAEXPAV?$vector@PAVskeleton@@V?$allocator@PAVskeleton@@@std@@@std@@@Z) referenced in function "void __cdecl renderScene(void)" (?renderScene@@YAXXZ)
-main.obj : error LNK2019: unresolved external symbol "public: __thiscall skeleton::skeleton(float * const,float * const)" (??0skeleton@@QAE@QAM0@Z) referenced in function _main
-C:\Users\paulo\OneDrive\Ambiente de Trabalho\Escola\LEI\Lei2020\build\Debug\class1.exe : fatal error LNK1120: 6 unresolved externals
+﻿  skeleton.cpp
+C:\Users\paulo\OneDrive\Ambiente de Trabalho\Escola\LEI\Lei2020\build\skeleton.cpp(82): warning C4018: '<': signed/unsigned mismatch
+C:\Users\paulo\OneDrive\Ambiente de Trabalho\Escola\LEI\Lei2020\build\skeleton.cpp(91): warning C4018: '<': signed/unsigned mismatch
+C:\Users\paulo\OneDrive\Ambiente de Trabalho\Escola\LEI\Lei2020\build\skeleton.cpp(162): warning C4018: '<': signed/unsigned mismatch
+C:\Users\paulo\OneDrive\Ambiente de Trabalho\Escola\LEI\Lei2020\build\skeleton.cpp(313): warning C4244: 'argument': conversion from 'float' to 'const unsigned int', possible loss of data
+C:\Users\paulo\OneDrive\Ambiente de Trabalho\Escola\LEI\Lei2020\build\skeleton.cpp(314): warning C4244: 'argument': conversion from 'float' to 'const unsigned int', possible loss of data
+C:\Users\paulo\OneDrive\Ambiente de Trabalho\Escola\LEI\Lei2020\build\skeleton.cpp(315): warning C4244: 'argument': conversion from 'float' to 'const unsigned int', possible loss of data
+C:\Users\paulo\OneDrive\Ambiente de Trabalho\Escola\LEI\Lei2020\build\skeleton.cpp(363): warning C4244: 'argument': conversion from 'float' to 'const unsigned int', possible loss of data
+C:\Users\paulo\OneDrive\Ambiente de Trabalho\Escola\LEI\Lei2020\build\skeleton.cpp(364): warning C4244: 'argument': conversion from 'float' to 'const unsigned int', possible loss of data
+C:\Users\paulo\OneDrive\Ambiente de Trabalho\Escola\LEI\Lei2020\build\skeleton.cpp(368): warning C4244: 'argument': conversion from 'float' to 'const unsigned int', possible loss of data
+C:\Users\paulo\OneDrive\Ambiente de Trabalho\Escola\LEI\Lei2020\build\skeleton.cpp(369): warning C4244: 'argument': conversion from 'float' to 'const unsigned int', possible loss of data
+C:\Users\paulo\OneDrive\Ambiente de Trabalho\Escola\LEI\Lei2020\build\skeleton.cpp(370): warning C4244: 'argument': conversion from 'float' to 'const unsigned int', possible loss of data
+C:\Users\paulo\OneDrive\Ambiente de Trabalho\Escola\LEI\Lei2020\build\skeleton.cpp(372): warning C4244: 'argument': conversion from 'float' to 'const unsigned int', possible loss of data
+C:\Users\paulo\OneDrive\Ambiente de Trabalho\Escola\LEI\Lei2020\build\skeleton.cpp(373): warning C4244: 'argument': conversion from 'float' to 'const unsigned int', possible loss of data
+C:\Users\paulo\OneDrive\Ambiente de Trabalho\Escola\LEI\Lei2020\build\skeleton.cpp(374): warning C4244: 'argument': conversion from 'float' to 'const unsigned int', possible loss of data
+C:\Users\paulo\OneDrive\Ambiente de Trabalho\Escola\LEI\Lei2020\build\skeleton.cpp(376): warning C4244: 'argument': conversion from 'float' to 'const unsigned int', possible loss of data
+C:\Users\paulo\OneDrive\Ambiente de Trabalho\Escola\LEI\Lei2020\build\skeleton.cpp(377): warning C4244: 'argument': conversion from 'float' to 'const unsigned int', possible loss of data
+C:\Users\paulo\OneDrive\Ambiente de Trabalho\Escola\LEI\Lei2020\build\skeleton.cpp(378): warning C4244: 'argument': conversion from 'float' to 'const unsigned int', possible loss of data
+c:\users\paulo\onedrive\ambiente de trabalho\escola\lei\lei2020\build\skeleton.cpp(415): warning C4715: 'skeleton::getEndEffector': not all control paths return a value
+  class1.vcxproj -> C:\Users\paulo\OneDrive\Ambiente de Trabalho\Escola\LEI\Lei2020\build\Debug\class1.exe

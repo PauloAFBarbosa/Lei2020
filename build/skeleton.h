@@ -22,6 +22,7 @@ public:
 	void update(float target[3], float * return_effector);
 	void tempSkeleton(int path, skeleton * ret);
 	void multiUpdate();
+	void getSubRoots(std::vector<skeleton *> * subRoots);
 	float distance(float p1[3], float p2[3]);
 	float totalSize();
 	float * getEndEffector();

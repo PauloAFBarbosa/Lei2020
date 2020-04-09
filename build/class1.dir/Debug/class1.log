@@ -1,20 +1,2 @@
-﻿  skeleton.cpp
-C:\Users\paulo\OneDrive\Ambiente de Trabalho\Escola\LEI\Lei2020\build\skeleton.cpp(82): warning C4018: '<': signed/unsigned mismatch
-C:\Users\paulo\OneDrive\Ambiente de Trabalho\Escola\LEI\Lei2020\build\skeleton.cpp(91): warning C4018: '<': signed/unsigned mismatch
-C:\Users\paulo\OneDrive\Ambiente de Trabalho\Escola\LEI\Lei2020\build\skeleton.cpp(162): warning C4018: '<': signed/unsigned mismatch
-C:\Users\paulo\OneDrive\Ambiente de Trabalho\Escola\LEI\Lei2020\build\skeleton.cpp(316): warning C4244: 'argument': conversion from 'float' to 'const unsigned int', possible loss of data
-C:\Users\paulo\OneDrive\Ambiente de Trabalho\Escola\LEI\Lei2020\build\skeleton.cpp(317): warning C4244: 'argument': conversion from 'float' to 'const unsigned int', possible loss of data
-C:\Users\paulo\OneDrive\Ambiente de Trabalho\Escola\LEI\Lei2020\build\skeleton.cpp(318): warning C4244: 'argument': conversion from 'float' to 'const unsigned int', possible loss of data
-C:\Users\paulo\OneDrive\Ambiente de Trabalho\Escola\LEI\Lei2020\build\skeleton.cpp(366): warning C4244: 'argument': conversion from 'float' to 'const unsigned int', possible loss of data
-C:\Users\paulo\OneDrive\Ambiente de Trabalho\Escola\LEI\Lei2020\build\skeleton.cpp(367): warning C4244: 'argument': conversion from 'float' to 'const unsigned int', possible loss of data
-C:\Users\paulo\OneDrive\Ambiente de Trabalho\Escola\LEI\Lei2020\build\skeleton.cpp(371): warning C4244: 'argument': conversion from 'float' to 'const unsigned int', possible loss of data
-C:\Users\paulo\OneDrive\Ambiente de Trabalho\Escola\LEI\Lei2020\build\skeleton.cpp(372): warning C4244: 'argument': conversion from 'float' to 'const unsigned int', possible loss of data
-C:\Users\paulo\OneDrive\Ambiente de Trabalho\Escola\LEI\Lei2020\build\skeleton.cpp(373): warning C4244: 'argument': conversion from 'float' to 'const unsigned int', possible loss of data
-C:\Users\paulo\OneDrive\Ambiente de Trabalho\Escola\LEI\Lei2020\build\skeleton.cpp(375): warning C4244: 'argument': conversion from 'float' to 'const unsigned int', possible loss of data
-C:\Users\paulo\OneDrive\Ambiente de Trabalho\Escola\LEI\Lei2020\build\skeleton.cpp(376): warning C4244: 'argument': conversion from 'float' to 'const unsigned int', possible loss of data
-C:\Users\paulo\OneDrive\Ambiente de Trabalho\Escola\LEI\Lei2020\build\skeleton.cpp(377): warning C4244: 'argument': conversion from 'float' to 'const unsigned int', possible loss of data
-C:\Users\paulo\OneDrive\Ambiente de Trabalho\Escola\LEI\Lei2020\build\skeleton.cpp(379): warning C4244: 'argument': conversion from 'float' to 'const unsigned int', possible loss of data
-C:\Users\paulo\OneDrive\Ambiente de Trabalho\Escola\LEI\Lei2020\build\skeleton.cpp(380): warning C4244: 'argument': conversion from 'float' to 'const unsigned int', possible loss of data
-C:\Users\paulo\OneDrive\Ambiente de Trabalho\Escola\LEI\Lei2020\build\skeleton.cpp(381): warning C4244: 'argument': conversion from 'float' to 'const unsigned int', possible loss of data
-c:\users\paulo\onedrive\ambiente de trabalho\escola\lei\lei2020\build\skeleton.cpp(422): warning C4715: 'skeleton::getEndEffector': not all control paths return a value
+﻿  main.cpp
   class1.vcxproj -> C:\Users\paulo\OneDrive\Ambiente de Trabalho\Escola\LEI\Lei2020\build\Debug\class1.exe

@@ -243,8 +243,122 @@ int main(int argc, char **argv) {
 	float start[3] = {0,0,0};
 	float end[3] = { 0,1,0 };
 	b = new skeleton(start, end);
-	//skeleton com dois endpoints
+	//skeleton com 4 endpoints mas cada chain tem 2 de comprimento
+	
+	float end2[3] = { 0,2,0 };
+	b->addChildren(end2);
 
+	float end3[3] = { -1,3,0 };
+	float end4[3] = { -2,4,0 };
+	float end5[3] = { 1,3,0 };
+	float end6[3] = { 2,4,0 };
+
+	//adiciona o primeiro ramo
+	b->children.at(0)->addChildren(end3);
+	b->children.at(0)->addChildren(end5);
+
+	//adiciona a cada ramo mais 1 de comprimento
+	b->children.at(0)->children.at(0)->addChildren(end4);
+	b->children.at(0)->children.at(1)->addChildren(end6);
+
+	float end7[3] = { -3,5,0 };
+	float end8[3] = { -2,5,0 };
+	float end9[3] = { 2,5,0 };
+	float end10[3] = { 3,5,0 };
+	float end11[3] = { -4,6,0 };
+	float end12[3] = { -2,6,0 };
+	float end13[3] = { 2,6,0 };
+	float end14[3] = { 4,6,0 };
+
+	//adiciona os 4 novos ramos
+	b->children.at(0)->children.at(0)->children.at(0)->addChildren(end7);
+	b->children.at(0)->children.at(0)->children.at(0)->addChildren(end8);
+
+	b->children.at(0)->children.at(1)->children.at(0)->addChildren(end9);
+	b->children.at(0)->children.at(1)->children.at(0)->addChildren(end10);
+
+	//aumenta o comprimento desses 4 ramos
+	b->children.at(0)->children.at(0)->children.at(0)->children.at(0)->addChildren(end11);
+	b->children.at(0)->children.at(0)->children.at(0)->children.at(1)->addChildren(end12);
+
+	b->children.at(0)->children.at(1)->children.at(0)->children.at(0)->addChildren(end13);
+	b->children.at(0)->children.at(1)->children.at(0)->children.at(1)->addChildren(end14);
+
+	//trata dos targets
+	b->children.at(0)->children.at(0)->children.at(0)->children.at(0)->children.at(0)->setTarget(-4,6,0);
+	b->children.at(0)->children.at(0)->children.at(0)->children.at(1)->children.at(0)->setTarget(-2, 6, 0);
+	b->children.at(0)->children.at(1)->children.at(0)->children.at(0)->children.at(0)->setTarget(2, 6, 0);
+	b->children.at(0)->children.at(1)->children.at(0)->children.at(1)->children.at(0)->setTarget(4, 6, 0);
+
+	target_s=b->children.at(0)->children.at(0)->children.at(0)->children.at(0)->children.at(0);
+	target_s_2=b->children.at(0)->children.at(1)->children.at(0)->children.at(1)->children.at(0);
+	
+
+
+	//vai adicionar mais ramos
+
+	//skeleton com 8 endpoints
+	/*
+	float end2[3] = { -1,2,0 };
+	float end3[3] = { 1,2,0 };
+	b->addChildren(end2);
+	b->addChildren(end3);
+
+	float end4[3] = { -2,3,0 };
+	float end5[3] = { -1,3,0 };
+	float end6[3] = { 1,3,0 };
+	float end7[3] = { 2,3,0 };
+
+	b->children.at(0)->addChildren(end4);
+	b->children.at(0)->addChildren(end5);
+
+	b->children.at(1)->addChildren(end6);
+	b->children.at(1)->addChildren(end7);
+
+	
+
+	float end8[3] = { -4,4,0 };
+	float end9[3] = { -3,4,0 };
+	float end10[3] = { -2,4,0 };
+	float end11[3] = { -1,4,0 };
+	float end12[3] = { 1,4,0 };
+	float end13[3] = { 2,4,0 };
+	float end14[3] = { 3,4,0 };
+	float end15[3] = { 4,4,0 };
+
+	b->children.at(0)->children.at(0)->addChildren(end8);
+	b->children.at(0)->children.at(0)->addChildren(end9);
+
+	b->children.at(0)->children.at(1)->addChildren(end10);
+	b->children.at(0)->children.at(1)->addChildren(end11);
+
+	b->children.at(1)->children.at(0)->addChildren(end12);
+	b->children.at(1)->children.at(0)->addChildren(end13);
+
+	b->children.at(1)->children.at(1)->addChildren(end14);
+	b->children.at(1)->children.at(1)->addChildren(end15);
+
+	//----------
+	b->children.at(0)->children.at(0)->children.at(0)->setTarget(-4,4,0);
+	b->children.at(0)->children.at(0)->children.at(1)->setTarget(-3, 4, 0);
+
+	b->children.at(0)->children.at(1)->children.at(0)->setTarget(-2, 4, 0);
+	b->children.at(0)->children.at(1)->children.at(1)->setTarget(-1, 4, 0);
+
+	b->children.at(1)->children.at(0)->children.at(0)->setTarget(1, 4, 0);
+	b->children.at(1)->children.at(0)->children.at(1)->setTarget(2, 4, 0);
+
+	b->children.at(1)->children.at(1)->children.at(0)->setTarget(3, 4, 0);
+	b->children.at(1)->children.at(1)->children.at(1)->setTarget(4, 4, 0);
+
+	
+
+	target_s_2 = b->children.at(1)->children.at(1)->children.at(1);
+	target_s = b->children.at(0)->children.at(0)->children.at(0);
+	*/
+
+	//skeleton com dois endpoints
+	/*
 	float end2[3] = { 0,2,0 };
 	b->addChildren(end2);
 	
@@ -278,6 +392,7 @@ int main(int argc, char **argv) {
 	//este target_s é usado para se poder alterar o target enquanto se executa o programa
 	target_s = b->children.at(0)->children.at(0)->children.at(0)->children.at(0)->children.at(0)->children.at(0);
 	target_s_2 = b->children.at(0)->children.at(1)->children.at(0)->children.at(0)->children.at(0)->children.at(0);
+	*/
 
 	/*
 	float end3[3] = { 0,2,0 };

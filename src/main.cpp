@@ -1,9 +1,9 @@
 #ifdef __APPLE__
 #include <GLUT/glut.h>
 #else
-#include "Bone.h"
-#include "skeleton.h"
-#include "../toolkits/glut/GL/glut.h"
+#include"Bone.h"
+#include"skeleton.h"
+#include<GL/glut.h>
 
 
 #endif
@@ -11,14 +11,19 @@
 #define _USE_MATH_DEFINES
 #include <math.h>
 
-skeleton * b;
+skeleton* b;
 float alfa = 0.0f, beta = 0.5f, radius = 20.0f;
-float camX=0, camY=5, camZ=20;
+float camX = 0, camY = 5, camZ = 20;
 float rot = 0;
 
+int controlling;
+
 float target[3];
-skeleton * target_s;
-skeleton * target_s_2;
+
+skeleton* targets[4];
+skeleton* target_s;
+skeleton* target_s_2;
+
 
 void spherical2Cartesian() {
 
@@ -32,43 +37,38 @@ void processKeys(unsigned char c, int xx, int yy) {
 	switch (c)
 	{
 	case 'q':
-		target_s->target[1] += 0.5;
-		
+		targets[controlling]->target[1] += 0.5;
+
+
 		break;
 	case 'e':
-		target_s->target[1] -= 0.5;
+		targets[controlling]->target[1] -= 0.5;
 		break;
 	case 'w':
-		target_s->target[0]+=0.5;
+		targets[controlling]->target[0] += 0.5;
 		break;
 	case 'd':
-		target_s->target[2] -= 0.5;
+		targets[controlling]->target[2] -= 0.5;
 		break;
 	case 's':
-		target_s->target[0] -= 0.5;
+		targets[controlling]->target[0] -= 0.5;
 		break;
 	case 'a':
-		target_s->target[2] += 0.5;
-		break;
-
-	case 'y':
-		target_s_2->target[1] += 0.5;
-
-		break;
-	case 'i':
-		target_s_2->target[1] -= 0.5;
-		break;
-	case 'u':
-		target_s_2->target[0] += 0.5;
-		break;
-	case 'k':
-		target_s_2->target[2] -= 0.5;
+		targets[controlling]->target[2] += 0.5;
 		break;
 	case 'j':
-		target_s_2->target[0] -= 0.5;
+		controlling++;
 		break;
-	case 'h':
-		target_s_2->target[2] += 0.5;
+	case 'k':
+		controlling--;
+		if (controlling < 0)
+			controlling = 0;
+		break;
+	case 'r':
+		b->changerestrictions();
+		break;
+	case 'o':
+		b->changeoutwards();
 		break;
 	default:
 		break;
@@ -112,11 +112,11 @@ void processSpecialKeys(int key, int xx, int yy) {
 
 
 void changeSize(int w, int h) {
-	
+
 
 	// Prevent a divide by zero, when window is too short
 	// (you cant make a window with zero width).
-	if(h == 0)
+	if (h == 0)
 		h = 1;
 
 	// compute window's aspect ratio 
@@ -126,12 +126,12 @@ void changeSize(int w, int h) {
 	glMatrixMode(GL_PROJECTION);
 	// Load Identity Matrix
 	glLoadIdentity();
-	
+
 	// Set the viewport to be the entire window
-    glViewport(0, 0, w, h);
+	glViewport(0, 0, w, h);
 
 	// Set perspective
-	gluPerspective(45.0f ,ratio, 1.0f ,1000.0f);
+	gluPerspective(45.0f, ratio, 1.0f, 1000.0f);
 
 	// return to the model view matrix mode
 	glMatrixMode(GL_MODELVIEW);
@@ -154,27 +154,57 @@ void renderScene(void) {
 	// set the camera
 	glLoadIdentity();
 	gluLookAt(camX, camY, camZ,
-		      0.0,0.0,0.0,
-			  0.0f,1.0f,0.0f);
+		0.0, 0.0, 0.0,
+		0.0f, 1.0f, 0.0f);
 
 	glPushMatrix();
-	glTranslatef(target_s->target[0], target_s->target[1], target_s->target[2]);
-	glutWireSphere( 0.5, 10, 10);
-	glPopMatrix();
-
-	glPushMatrix();
-	glTranslatef(target_s_2->target[0], target_s_2->target[1], target_s_2->target[2]);
+	if (controlling == 0)
+		glColor3f(1.0f, 0.0f, 0.0f);
+	glTranslatef(targets[0]->target[0], targets[0]->target[1], targets[0]->target[2]);
 	glutWireSphere(0.5, 10, 10);
+	glColor3f(0.0f, 0.0f, 1.0f);
 	glPopMatrix();
-// put drawing instructions here
-	std::vector<skeleton *> all;
+
+	glPushMatrix();
+	if (controlling == 1)
+		glColor3f(1.0f, 0.0f, 0.0f);
+	glTranslatef(targets[1]->target[0], targets[1]->target[1], targets[1]->target[2]);
+	glutWireSphere(0.5, 10, 10);
+	glColor3f(0.0f, 0.0f, 1.0f);
+	glPopMatrix();
+
+	glPushMatrix();
+	if (controlling == 2)
+		glColor3f(1.0f, 0.0f, 0.0f);
+	glTranslatef(targets[2]->target[0], targets[2]->target[1], targets[2]->target[2]);
+	glutWireSphere(0.5, 10, 10);
+	glColor3f(0.0f, 0.0f, 1.0f);
+	glPopMatrix();
+
+	glPushMatrix();
+	if (controlling == 3)
+		glColor3f(1.0f, 0.0f, 0.0f);
+	glTranslatef(targets[3]->target[0], targets[3]->target[1], targets[3]->target[2]);
+	glutWireSphere(0.5, 10, 10);
+	glColor3f(0.0f, 0.0f, 1.0f);
+	glPopMatrix();
+
+	glColor3f(0.0f, 0.0f, 1.0f);
+	// put drawing instructions here
+	std::vector<skeleton*> all;
 	b->getAllSkeleton(&all);
-	
+
+
+
+
+
 
 	b->draw();
-	b->multiUpdate();
+	b->multiUpdate(targets);
+
+
 	//b->update(target);
-	
+
 
 	//axis
 
@@ -233,18 +263,20 @@ void renderScene(void) {
 
 
 
-int main(int argc, char **argv) {
-	
+int main(int argc, char** argv) {
+
+	controlling = 0;
+
 	target[0] = 4;
 	target[1] = 3;
 	target[2] = 4;
-	
 
-	float start[3] = {0,0,0};
-	float end[3] = { 0,1,0 };
-	b = new skeleton(start, end);
+
+	float start_placeholder[3] = { 0,0,0 };
+	float end_placeholder[3] = { 0,1,0 };
+	b = new skeleton(start_placeholder, end_placeholder);
 	//skeleton com 4 endpoints mas cada chain tem 2 de comprimento
-	
+
 	float end2[3] = { 0,2,0 };
 	b->addChildren(end2);
 
@@ -285,14 +317,19 @@ int main(int argc, char **argv) {
 	b->children.at(0)->children.at(1)->children.at(0)->children.at(1)->addChildren(end14);
 
 	//trata dos targets
-	b->children.at(0)->children.at(0)->children.at(0)->children.at(0)->children.at(0)->setTarget(-4,6,0);
+	b->children.at(0)->children.at(0)->children.at(0)->children.at(0)->children.at(0)->setTarget(-4, 6, 0);
 	b->children.at(0)->children.at(0)->children.at(0)->children.at(1)->children.at(0)->setTarget(-2, 6, 0);
 	b->children.at(0)->children.at(1)->children.at(0)->children.at(0)->children.at(0)->setTarget(2, 6, 0);
 	b->children.at(0)->children.at(1)->children.at(0)->children.at(1)->children.at(0)->setTarget(4, 6, 0);
 
-	target_s=b->children.at(0)->children.at(0)->children.at(0)->children.at(0)->children.at(0);
-	target_s_2=b->children.at(0)->children.at(1)->children.at(0)->children.at(1)->children.at(0);
-	
+	targets[0] = b->children.at(0)->children.at(0)->children.at(0)->children.at(0)->children.at(0);
+	targets[1] = b->children.at(0)->children.at(0)->children.at(0)->children.at(1)->children.at(0);
+	targets[2] = b->children.at(0)->children.at(1)->children.at(0)->children.at(0)->children.at(0);
+	targets[3] = b->children.at(0)->children.at(1)->children.at(0)->children.at(1)->children.at(0);
+
+	//target_s=b->children.at(0)->children.at(0)->children.at(0)->children.at(0)->children.at(0);
+	//target_s_2=b->children.at(0)->children.at(1)->children.at(0)->children.at(1)->children.at(0);
+
 
 
 	//vai adicionar mais ramos
@@ -315,7 +352,7 @@ int main(int argc, char **argv) {
 	b->children.at(1)->addChildren(end6);
 	b->children.at(1)->addChildren(end7);
 
-	
+
 
 	float end8[3] = { -4,4,0 };
 	float end9[3] = { -3,4,0 };
@@ -351,7 +388,7 @@ int main(int argc, char **argv) {
 	b->children.at(1)->children.at(1)->children.at(0)->setTarget(3, 4, 0);
 	b->children.at(1)->children.at(1)->children.at(1)->setTarget(4, 4, 0);
 
-	
+
 
 	target_s_2 = b->children.at(1)->children.at(1)->children.at(1);
 	target_s = b->children.at(0)->children.at(0)->children.at(0);
@@ -361,7 +398,7 @@ int main(int argc, char **argv) {
 	/*
 	float end2[3] = { 0,2,0 };
 	b->addChildren(end2);
-	
+
 	float end3[3] = { 1,3,0 };
 	float end4[3] = { -1,3,0 };
 	b->children.at(0)->addChildren(end3);
@@ -387,8 +424,8 @@ int main(int argc, char **argv) {
 	b->children.at(0)->children.at(0)->children.at(0)->children.at(0)->children.at(0)->children.at(0)->setTarget(3,3,3);
 	b->children.at(0)->children.at(1)->children.at(0)->children.at(0)->children.at(0)->children.at(0)->setTarget(-3,3,-3);
 
-	
-	
+
+
 	//este target_s é usado para se poder alterar o target enquanto se executa o programa
 	target_s = b->children.at(0)->children.at(0)->children.at(0)->children.at(0)->children.at(0)->children.at(0);
 	target_s_2 = b->children.at(0)->children.at(1)->children.at(0)->children.at(0)->children.at(0)->children.at(0);
@@ -399,7 +436,7 @@ int main(int argc, char **argv) {
 	b->addChildren(end3);
 
 	skeleton *temp= b->children.at(0);
-	
+
 	float end4[3] = { 0,3,0 };
 	temp->addChildren(end4);
 	float end5[3] = { 0,4,0 };
@@ -427,7 +464,7 @@ int main(int argc, char **argv) {
 	glutInitWindowPosition(100, 100);
 	glutInitWindowSize(799, 599);
 	glutCreateWindow("CG@DI");
-// put callback registration here
+	// put callback registration here
 
 	glutDisplayFunc(renderScene);
 	glutReshapeFunc(changeSize);
@@ -436,15 +473,15 @@ int main(int argc, char **argv) {
 	glutKeyboardFunc(processKeys);
 	glutSpecialFunc(processSpecialKeys);
 
-	
-// OpenGL settings 
+
+	// OpenGL settings 
 	glEnable(GL_DEPTH_TEST);
 	glEnable(GL_CULL_FACE);
-	glClearColor(0.0f,0.0f,0.0f,0.0f);
+	glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
 
-// enter GLUT's main loop
+	// enter GLUT's main loop
 	glutMainLoop();
-	
+
 	return 1;
 }
 

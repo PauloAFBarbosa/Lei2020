@@ -273,6 +273,37 @@ void skeleton::applyRestrictions(float firstVecX, float firstVecY, float firstVe
 
 }
 
+void rotate(float original[3], float target_vector[3],float angle ,float res[3]) {
+
+	float v2[3];
+
+	cross_skel(original, target_vector, v2);
+
+	normalize_skel(v2);
+
+	float c = cos(angle);
+	float s = sin(angle);
+	float C = 1.0 - c;
+
+	float Q[3][3];
+	Q[0][0] = v2[0] * v2[0] * C + c;
+	Q[0][1] = v2[1] * v2[0] * C + v2[2] * s;
+	Q[0][2] = v2[2] * v2[0] * C - v2[1] * s;
+
+	Q[1][0] = v2[1] * v2[0] * C - v2[2] * s;
+	Q[1][1] = v2[1] * v2[1] * C + c;
+	Q[1][2] = v2[2] * v2[1] * C + v2[0] * s;
+
+	Q[2][0] = v2[0] * v2[2] * C + v2[1] * s;
+	Q[2][1] = v2[2] * v2[1] * C - v2[0] * s;
+	Q[2][2] = v2[2] * v2[2] * C + c;
+	
+	res[0] = original[0] * Q[0][0] + original[0] * Q[0][1] + original[0] * Q[0][2];
+	res[1] = original[1] * Q[1][0] + original[1] * Q[1][1] + original[1] * Q[1][2];
+	res[2] = original[2] * Q[2][0] + original[2] * Q[2][1] + original[2] * Q[2][2];
+
+}
+
 bool skeleton::multiUpdateIn(float* originalX, float* originalY, float* originalZ) {
 	//get all sub-roots
 	std::vector<skeleton*> subRoots;
@@ -373,42 +404,14 @@ bool skeleton::multiUpdateIn(float* originalX, float* originalY, float* original
 						//0,78 sao 45 graus, se tiver maior que 45 graus esta fora e vai ter de fazer alguma coisa
 						if (acos > 1.57) {
 
-							{
-								return false;
-							}
-
-
-							float v2[3];
-
-							cross_skel(vector, vector_teste, v2);
-
-							normalize_skel(v2);
-
-							float c = cos(acos);
-							float s = sin(acos);
-							float C = 1.0 - c;
-
-							float Q[3][3];
-							Q[0][0] = v2[0] * v2[0] * C + c;
-							Q[0][1] = v2[1] * v2[0] * C + v2[2] * s;
-							Q[0][2] = v2[2] * v2[0] * C - v2[1] * s;
-
-							Q[1][0] = v2[1] * v2[0] * C - v2[2] * s;
-							Q[1][1] = v2[1] * v2[1] * C + c;
-							Q[1][2] = v2[2] * v2[1] * C + v2[0] * s;
-
-							Q[2][0] = v2[0] * v2[2] * C + v2[1] * s;
-							Q[2][1] = v2[2] * v2[1] * C - v2[0] * s;
-							Q[2][2] = v2[2] * v2[2] * C + c;
 							float resultado[3];
-							resultado[0] = vector[0] * Q[0][0] + vector[0] * Q[0][1] + vector[0] * Q[0][2];
-							resultado[1] = vector[1] * Q[1][0] + vector[1] * Q[1][1] + vector[1] * Q[1][2];
-							resultado[2] = vector[2] * Q[2][0] + vector[2] * Q[2][1] + vector[2] * Q[2][2];
+							
+							rotate(vector, vector_teste, acos ,resultado);
 
 							normalize_skel(resultado);
 
-							float dist;
-							dist = sqrt(pow(point[0] - chain.at(i)->me->end[0], 2) + pow(point[2] - chain.at(i)->me->end[2], 2) + pow(point[2] - chain.at(i)->me->end[2], 2));
+							double dist;
+							dist = sqrt(pow((double) point[0] - (double)chain.at(i)->me->end[0], 2) + pow((double)point[2] - (double)chain.at(i)->me->end[2], 2) + pow((double)point[2] - (double)chain.at(i)->me->end[2], 2));
 
 							resultado[0] = resultado[0] * dist + point[0];
 							resultado[1] = resultado[1] * dist + point[1];
@@ -422,14 +425,7 @@ bool skeleton::multiUpdateIn(float* originalX, float* originalY, float* original
 								chain.at(i - 1)->me->end[1] = resultado[1];
 								chain.at(i - 1)->me->end[2] = resultado[2];
 							}
-
-							printf("Ponto inicial %f %f %f \n", chain.at(i)->me->end[0], chain.at(i)->me->end[1], chain.at(i)->me->end[2]);
-							printf("Ponto Fora %f %f %f \n", point[0], point[1], point[2]);
-							printf("Novo Ponto %f %f %f \n", resultado[0], resultado[1], resultado[2]);
-
 						}
-
-
 
 						//preparar o vetor para a prox iteração
 						//nao precisa fazer nada no ultimo
@@ -440,8 +436,6 @@ bool skeleton::multiUpdateIn(float* originalX, float* originalY, float* original
 
 							normalize_skel(vector);
 						}
-
-
 						//so posso adicionar aqui à lista porque tenho de esperar que as correções sejam feitas pelas restrições
 						if (i == 0) {
 							positions.push_back(chain.at(i)->me->start[0]);
@@ -532,6 +526,17 @@ bool skeleton::multiUpdateIn(float* originalX, float* originalY, float* original
 	chain.at(i)->me->end[1] = (*target)[1];
 	chain.at(i)->me->end[2] = (*target)[2];
 
+	//------restrições
+			//vai calcular o vetor para as restrições seguintes
+	float vector[3];
+	vector[0] = chain.at(i)->me->start[0] - chain.at(i)->me->end[0];
+	vector[1] = chain.at(i)->me->start[1] - chain.at(i)->me->end[1];
+	vector[2] = chain.at(i)->me->start[2] - chain.at(i)->me->end[2];
+
+	normalize_skel(vector);
+
+	//------restrições
+
 	for (i; i >= 0; i--)
 	{
 		float r = distance(chain.at(i)->me->end, chain.at(i)->me->start);
@@ -541,6 +546,7 @@ bool skeleton::multiUpdateIn(float* originalX, float* originalY, float* original
 		temp1 = (1 - y) * chain.at(i)->me->end[0] + y * chain.at(i)->me->start[0];
 		temp2 = (1 - y) * chain.at(i)->me->end[1] + y * chain.at(i)->me->start[1];
 		temp3 = (1 - y) * chain.at(i)->me->end[2] + y * chain.at(i)->me->start[2];
+
 		chain.at(i)->me->start[0] = temp1;
 		chain.at(i)->me->start[1] = temp2;
 		chain.at(i)->me->start[2] = temp3;
@@ -551,6 +557,68 @@ bool skeleton::multiUpdateIn(float* originalX, float* originalY, float* original
 			chain.at(i - 1)->me->end[1] = temp2;
 			chain.at(i - 1)->me->end[2] = temp3;
 		}
+
+		if (restrictions == true) {
+			if (i != chain.size() - 1) {
+				//Vai ver se o ponto esta dentro ou fora do cone
+				float point[3];
+
+				point[0] = chain.at(i)->me->start[0];
+				point[1] = chain.at(i)->me->start[1];
+				point[2] = chain.at(i)->me->start[2];
+
+				float vector_teste[3];
+				vector_teste[0] = point[0] - chain.at(i)->me->end[0];
+				vector_teste[1] = point[1] - chain.at(i)->me->end[1];
+				vector_teste[2] = point[2] - chain.at(i)->me->end[2];
+
+				normalize_skel(vector_teste);
+
+				float dot = vector[0] * vector_teste[0] + vector[1] * vector_teste[1] + vector[2] * vector_teste[2];
+
+				float acos = acosf(dot);
+
+				//printf("Acos %f \n", acos);
+				//0,78 sao 45 graus, se tiver maior que 45 graus esta fora e vai ter de fazer alguma coisa
+				if (acos > 1.57) {
+
+					float resultado[3];
+
+					rotate(vector, vector_teste, acos, resultado);
+
+					normalize_skel(resultado);
+
+					double dist;
+					dist = sqrt(pow((double)point[0] - (double)chain.at(i)->me->end[0], 2) + pow((double)point[2] - (double)chain.at(i)->me->end[2], 2) + pow((double)point[2] - (double)chain.at(i)->me->end[2], 2));
+
+					resultado[0] = resultado[0] * dist + point[0];
+					resultado[1] = resultado[1] * dist + point[1];
+					resultado[2] = resultado[2] * dist + point[2];
+
+					chain.at(i)->me->start[0] = resultado[0];
+					chain.at(i)->me->start[1] = resultado[1];
+					chain.at(i)->me->start[2] = resultado[2];
+					if (i != 0) {
+						chain.at(i - 1)->me->end[0] = resultado[0];
+						chain.at(i - 1)->me->end[1] = resultado[1];
+						chain.at(i - 1)->me->end[2] = resultado[2];
+					}
+
+				}
+				//preparar o vetor para a prox iteração
+				//nao precisa fazer nada no ultimo
+				if (i != 0) {
+					vector[0] = chain.at(i - 1)->me->start[0] - chain.at(i - 1)->me->end[0];
+					vector[1] = chain.at(i - 1)->me->start[1] - chain.at(i - 1)->me->end[1];
+					vector[2] = chain.at(i - 1)->me->start[2] - chain.at(i - 1)->me->end[2];
+
+					normalize_skel(vector);
+				}
+
+			}
+		}
+
+
 	}
 	return true;
 }
@@ -567,7 +635,18 @@ void skeleton::multiUpdateOut(float originalX, float originalY, float originalZ)
 	chain_root.at(0)->me->start[1] = originalY;
 	chain_root.at(0)->me->start[2] = originalZ;
 
-	for (int i = 0; i < chain_root.size() - 1; i++)
+	//------restrições
+			//vai calcular o vetor para as restrições seguintes
+	float vector[3];
+	vector[0] = chain_root.at(0)->me->end[0] - chain_root.at(0)->me->start[0];
+	vector[1] = chain_root.at(0)->me->end[1] - chain_root.at(0)->me->start[1];
+	vector[2] = chain_root.at(0)->me->end[2] - chain_root.at(0)->me->start[2];
+
+	normalize_skel(vector);
+
+	//------restrições
+
+	for (int i = 0; i <= chain_root.size() - 1; i++)
 	{
 		float r = distance(chain_root.at(i)->me->start, chain_root.at(i)->me->end);
 		float y = chain_root.at(i)->me->size / r;
@@ -581,10 +660,63 @@ void skeleton::multiUpdateOut(float originalX, float originalY, float originalZ)
 		chain_root.at(i)->me->end[0] = temp1;
 		chain_root.at(i)->me->end[1] = temp2;
 		chain_root.at(i)->me->end[2] = temp3;
+		if (chain_root.size() - 1 != i) {
+			chain_root.at(i + 1)->me->start[0] = temp1;
+			chain_root.at(i + 1)->me->start[1] = temp2;
+			chain_root.at(i + 1)->me->start[2] = temp3;
+		}
+		
+		
+		if (restrictions == true) {
+			float point[3];
 
-		chain_root.at(i + 1)->me->start[0] = temp1;
-		chain_root.at(i + 1)->me->start[1] = temp2;
-		chain_root.at(i + 1)->me->start[2] = temp3;
+			point[0] = chain_root.at(i)->me->end[0];
+			point[1] = chain_root.at(i)->me->end[1];
+			point[2] = chain_root.at(i)->me->end[2];
+
+			float vector_teste[3];
+			vector_teste[0] = point[0] - chain_root.at(i)->me->end[0];
+			vector_teste[1] = point[1] - chain_root.at(i)->me->end[1];
+			vector_teste[2] = point[2] - chain_root.at(i)->me->end[2];
+
+			normalize_skel(vector_teste);
+
+			float dot = vector[0] * vector_teste[0] + vector[1] * vector_teste[1] + vector[2] * vector_teste[2];
+
+			float acos = acosf(dot);
+
+			//printf("Acos %f \n", acos);
+			//0,78 sao 45 graus, se tiver maior que 45 graus esta fora e vai ter de fazer alguma coisa
+			if (acos > 1.57) {
+				float resultado[3];
+				rotate(vector, vector_teste, acos, resultado);
+
+				normalize_skel(resultado);
+
+				double dist;
+				dist = sqrt(pow((double)point[0] - (double)chain_root.at(i)->me->start[0], 2) + pow((double)point[2] - (double)chain_root.at(i)->me->start[2], 2) + pow((double)point[2] - (double)chain_root.at(i)->me->start[2], 2));
+
+				resultado[0] = resultado[0] * dist + point[0];
+				resultado[1] = resultado[1] * dist + point[1];
+				resultado[2] = resultado[2] * dist + point[2];
+
+				chain_root.at(i)->me->end[0] = resultado[0];
+				chain_root.at(i)->me->end[1] = resultado[1];
+				chain_root.at(i)->me->end[2] = resultado[2];
+				chain_root.at(i + 1)->me->start[0] = resultado[0];
+				chain_root.at(i + 1)->me->start[1] = resultado[1];
+				chain_root.at(i + 1)->me->start[2] = resultado[2];
+
+				vector[0] = chain_root.at(i)->me->end[0] - chain_root.at(i)->me->start[0];
+				vector[1] = chain_root.at(i)->me->end[1] - chain_root.at(i)->me->start[1];
+				vector[2] = chain_root.at(i)->me->end[2] - chain_root.at(i)->me->start[2];
+
+				normalize_skel(vector);
+
+
+			}
+		}
+		
 	}
 	//Agora vai ter de aplicar esta algoritmo para todas as sub chains que aparecem
 	//vai guardar os sub_roots a processar
@@ -619,7 +751,7 @@ void skeleton::multiUpdateOut(float originalX, float originalY, float originalZ)
 
 			//------restrições
 
-			for (int i = 0; i < chain_2.size() - 1; i++)
+			for (int i = 0; i <= chain_2.size() - 1; i++)
 			{
 				float r = distance(chain_2.at(i)->me->start, chain_2.at(i)->me->end);
 				float y = chain_2.at(i)->me->size / r;
@@ -634,11 +766,12 @@ void skeleton::multiUpdateOut(float originalX, float originalY, float originalZ)
 				chain_2.at(i)->me->end[1] = temp2;
 				chain_2.at(i)->me->end[2] = temp3;
 
-				chain_2.at(i + 1)->me->start[0] = temp1;
-				chain_2.at(i + 1)->me->start[1] = temp2;
-				chain_2.at(i + 1)->me->start[2] = temp3;
-
-
+				if (chain_2.size() - 1 != i) {
+					chain_2.at(i + 1)->me->start[0] = temp1;
+					chain_2.at(i + 1)->me->start[1] = temp2;
+					chain_2.at(i + 1)->me->start[2] = temp3;
+				}
+				
 				if (restrictions == true) {
 					float point[3];
 
@@ -660,37 +793,61 @@ void skeleton::multiUpdateOut(float originalX, float originalY, float originalZ)
 					//printf("Acos %f \n", acos);
 					//0,78 sao 45 graus, se tiver maior que 45 graus esta fora e vai ter de fazer alguma coisa
 					if (acos > 1.57) {
-						float v2[3];
-
-						cross_skel(vector, vector_teste, v2);
-
-						normalize_skel(v2);
-
-						float c = cos(acos);
-						float s = sin(acos);
-						float C = 1.0 - c;
-
-						float Q[3][3];
-						Q[0][0] = v2[0] * v2[0] * C + c;
-						Q[0][1] = v2[1] * v2[0] * C + v2[2] * s;
-						Q[0][2] = v2[2] * v2[0] * C - v2[1] * s;
-
-						Q[1][0] = v2[1] * v2[0] * C - v2[2] * s;
-						Q[1][1] = v2[1] * v2[1] * C + c;
-						Q[1][2] = v2[2] * v2[1] * C + v2[0] * s;
-
-						Q[2][0] = v2[0] * v2[2] * C + v2[1] * s;
-						Q[2][1] = v2[2] * v2[1] * C - v2[0] * s;
-						Q[2][2] = v2[2] * v2[2] * C + c;
 						float resultado[3];
-						resultado[0] = vector[0] * Q[0][0] + vector[0] * Q[0][1] + vector[0] * Q[0][2];
-						resultado[1] = vector[1] * Q[1][0] + vector[1] * Q[1][1] + vector[1] * Q[1][2];
-						resultado[2] = vector[2] * Q[2][0] + vector[2] * Q[2][1] + vector[2] * Q[2][2];
+						rotate(vector, vector_teste, acos, resultado);
 
 						normalize_skel(resultado);
 
-						float dist;
-						dist = sqrt(pow(point[0] - chain_2.at(i)->me->start[0], 2) + pow(point[2] - chain_2.at(i)->me->start[2], 2) + pow(point[2] - chain_2.at(i)->me->start[2], 2));
+						double dist;
+						dist = sqrt(pow((double) point[0] - (double)chain_2.at(i)->me->start[0], 2) + pow((double)point[2] - (double)chain_2.at(i)->me->start[2], 2) + pow((double)point[2] - (double)chain_2.at(i)->me->start[2], 2));
+
+						resultado[0] = resultado[0] * dist + point[0];
+						resultado[1] = resultado[1] * dist + point[1];
+						resultado[2] = resultado[2] * dist + point[2];
+
+						chain_2.at(i)->me->end[0] = resultado[0];
+						chain_2.at(i)->me->end[1] = resultado[1];
+						chain_2.at(i)->me->end[2] = resultado[2];
+						chain_2.at(i + 1)->me->start[0] = resultado[0];
+						chain_2.at(i + 1)->me->start[1] = resultado[1];
+						chain_2.at(i + 1)->me->start[2] = resultado[2];
+
+						vector[0] = chain_2.at(i)->me->end[0] - chain_2.at(i)->me->start[0];
+						vector[1] = chain_2.at(i)->me->end[1] - chain_2.at(i)->me->start[1];
+						vector[2] = chain_2.at(i)->me->end[2] - chain_2.at(i)->me->start[2];
+
+						normalize_skel(vector);
+
+
+					}
+				if (restrictions == true) {
+					float point[3];
+
+					point[0] = chain_2.at(i)->me->end[0];
+					point[1] = chain_2.at(i)->me->end[1];
+					point[2] = chain_2.at(i)->me->end[2];
+
+					float vector_teste[3];
+					vector_teste[0] = point[0] - chain_2.at(i)->me->end[0];
+					vector_teste[1] = point[1] - chain_2.at(i)->me->end[1];
+					vector_teste[2] = point[2] - chain_2.at(i)->me->end[2];
+
+					normalize_skel(vector_teste);
+
+					float dot = vector[0] * vector_teste[0] + vector[1] * vector_teste[1] + vector[2] * vector_teste[2];
+
+					float acos = acosf(dot);
+
+					//printf("Acos %f \n", acos);
+					//0,78 sao 45 graus, se tiver maior que 45 graus esta fora e vai ter de fazer alguma coisa
+					if (acos > 1.57) {
+						float resultado[3];
+						rotate(vector, vector_teste, acos, resultado);
+
+						normalize_skel(resultado);
+
+						double dist;
+						dist = sqrt(pow((double) point[0] - (double)chain_2.at(i)->me->start[0], 2) + pow((double)point[2] - (double)chain_2.at(i)->me->start[2], 2) + pow((double)point[2] - (double)chain_2.at(i)->me->start[2], 2));
 
 						resultado[0] = resultado[0] * dist + point[0];
 						resultado[1] = resultado[1] * dist + point[1];
@@ -712,6 +869,8 @@ void skeleton::multiUpdateOut(float originalX, float originalY, float originalZ)
 
 					}
 				}
+				}
+				
 
 			}
 			if (chain_2.at(chain_2.size() - 1)->children.size() > 1) {
@@ -735,28 +894,18 @@ void skeleton::multiUpdate(skeleton* targets[4])
 		//tem de se fazer pelo menos a inicialização de B com um valor placeholder
 		//estou a criar aqui para garantir que nao perde o scope
 		skeleton* placeholder;
-		float start[3] = { 0,0,0 };
-		float end[3] = { 0,1,0 };
+		//float start[3] = { 0,0,0 };
+		//float end[3] = { 0,1,0 };
 
-		placeholder = new skeleton(start, end);
+		//placeholder = new skeleton(start, end);
 
-		this->save_state(placeholder);
+		//this->save_state(placeholder);
 
 		bool ret = this->multiUpdateIn(&originalx, &originaly, &originalz);
 
-		if (outwards == true && ret == true) {
+		this->multiUpdateOut(originalx, originaly, originalz);
 
-			this->multiUpdateOut(originalx, originaly, originalz);
-		}
-		else if (ret == false) {
-
-			this->reverte_state(placeholder);
-
-			//placeholder->save_state(this);
-
-
-		}
-		delete placeholder;
+		
 
 	}
 

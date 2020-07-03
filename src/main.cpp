@@ -11,19 +11,15 @@
 #define _USE_MATH_DEFINES
 #include <math.h>
 
-skeleton* b;
+skeleton* up;
+skeleton* down;
 float alfa = 0.0f, beta = 0.5f, radius = 20.0f;
 float camX = 0, camY = 5, camZ = 20;
 float rot = 0;
 
 int controlling;
 
-float target[3];
-
-skeleton* targets[4];
-skeleton* target_s;
-skeleton* target_s_2;
-
+skeleton* targets[5];
 
 void spherical2Cartesian() {
 
@@ -38,8 +34,6 @@ void processKeys(unsigned char c, int xx, int yy) {
 	{
 	case 'q':
 		targets[controlling]->target[1] += 0.5;
-
-
 		break;
 	case 'e':
 		targets[controlling]->target[1] -= 0.5;
@@ -65,10 +59,12 @@ void processKeys(unsigned char c, int xx, int yy) {
 			controlling = 0;
 		break;
 	case 'r':
-		b->changerestrictions();
+		up->changerestrictions();
+		down->changerestrictions();
 		break;
 	case 'o':
-		b->changeoutwards();
+		up->changeoutwards();
+		down->changeoutwards();
 		break;
 	default:
 		break;
@@ -189,22 +185,20 @@ void renderScene(void) {
 	glColor3f(0.0f, 0.0f, 1.0f);
 	glPopMatrix();
 
+	glPushMatrix();
+	if (controlling == 4)
+		glColor3f(1.0f, 0.0f, 0.0f);
+	glTranslatef(targets[4]->target[0], targets[4]->target[1], targets[4]->target[2]);
+	glutWireSphere(0.5, 10, 10);
 	glColor3f(0.0f, 0.0f, 1.0f);
-	// put drawing instructions here
-	std::vector<skeleton*> all;
-	b->getAllSkeleton(&all);
+	glPopMatrix();
 
+	glColor3f(0.0f, 0.0f, 1.0f);
 
-
-
-
-
-	b->draw();
-	b->multiUpdate(targets);
-
-
-	//b->update(target);
-
+	up->draw();
+	down->draw();
+	up->multiUpdate(targets);
+	down->multiUpdate(targets);
 
 	//axis
 
@@ -267,65 +261,71 @@ int main(int argc, char** argv) {
 
 	controlling = 0;
 
-	target[0] = 4;
-	target[1] = 3;
-	target[2] = 4;
+	//skeleton points
+	float start[3] = { 0,0,0 };
 
+	float up1[3] = { 0,2,0 };
+	float up2[3] = { 0,3,0 };
+	float up3[3] = { 0,4,0 };
+	float up4[3] = { 0,4.5,0 };
+	float up5[3] = { -1,3,0 };
+	float up6[3] = { -2,1.5,0 };
+	float up7[3] = { -2,-1,0 };
+	float up8[3] = { 1,3,0 };
+	float up9[3] = { 2,1.5,0 };
+	float up10[3] = { 2,-1,0 };
+	float up11[3] = { 0,4.5,1 };
 
-	float start_placeholder[3] = { 0,0,0 };
-	float end_placeholder[3] = { 0,1,0 };
-	b = new skeleton(start_placeholder, end_placeholder);
-	//skeleton com 4 endpoints mas cada chain tem 2 de comprimento
+	float down1[3] = { 0,-2,0 };
+	float down2[3] = { -1,-2,0 };
+	float down3[3] = { -1,-4,0 };
+	float down4[3] = { -1,-6,0 };
+	float down5[3] = { 1,-2,0 };
+	float down6[3] = { 1,-4,0 };
+	float down7[3] = { 1,-6,0 };
 
-	float end2[3] = { 0,2,0 };
-	b->addChildren(end2);
+	//Parte superior
+	up = new skeleton(start, up1);
+	//Tronco
+	up->addChildren(up2);
+	//Cabeça
+	up->children.at(0)->addChildren(up3);
+	up->children.at(0)->children.at(0)->addChildren(up4);
+	up->children.at(0)->children.at(0)->children.at(0)->addChildren(up11);
+	//braço 1
+	up->children.at(0)->addChildren(up5);
+	up->children.at(0)->children.at(1)->addChildren(up6);
+	up->children.at(0)->children.at(1)->children.at(0)->addChildren(up7);
+	//braço 2
+	up->children.at(0)->addChildren(up8);
+	up->children.at(0)->children.at(2)->addChildren(up9);
+	up->children.at(0)->children.at(2)->children.at(0)->addChildren(up10);
 
-	float end3[3] = { -1,3,0 };
-	float end4[3] = { -2,4,0 };
-	float end5[3] = { 1,3,0 };
-	float end6[3] = { 2,4,0 };
+	//Parte inferior
+	down = new skeleton(start, down1);
+	//Perna 1
+	down->addChildren(down2);
+	down->children.at(0)->addChildren(down3);
+	down->children.at(0)->children.at(0)->addChildren(down4);
+	//Perna 2
+	down->addChildren(down5);
+	down->children.at(1)->addChildren(down6);
+	down->children.at(1)->children.at(0)->addChildren(down7);
 
-	//adiciona o primeiro ramo
-	b->children.at(0)->addChildren(end3);
-	b->children.at(0)->addChildren(end5);
+	//Targets
+	up->children.at(0)->children.at(0)->children.at(0)->children.at(0)->setTarget(0, 4.5, 1);//Cabeça
+	up->children.at(0)->children.at(1)->children.at(0)->children.at(0)->setTarget(-2, -1, 0);//Braço 1
+	up->children.at(0)->children.at(2)->children.at(0)->children.at(0)->setTarget(2, -1, 0);//Braço 2
 
-	//adiciona a cada ramo mais 1 de comprimento
-	b->children.at(0)->children.at(0)->addChildren(end4);
-	b->children.at(0)->children.at(1)->addChildren(end6);
+	down->children.at(0)->children.at(0)->children.at(0)->setTarget(-1, -6, 0);
+	down->children.at(1)->children.at(0)->children.at(0)->setTarget(1, -6, 0);
 
-	float end7[3] = { -3,5,0 };
-	float end8[3] = { -2,5,0 };
-	float end9[3] = { 2,5,0 };
-	float end10[3] = { 3,5,0 };
-	float end11[3] = { -4,6,0 };
-	float end12[3] = { -2,6,0 };
-	float end13[3] = { 2,6,0 };
-	float end14[3] = { 4,6,0 };
+	targets[0] = up->children.at(0)->children.at(0)->children.at(0)->children.at(0);
+	targets[1] = up->children.at(0)->children.at(1)->children.at(0)->children.at(0);
+	targets[2] = up->children.at(0)->children.at(2)->children.at(0)->children.at(0);
 
-	//adiciona os 4 novos ramos
-	b->children.at(0)->children.at(0)->children.at(0)->addChildren(end7);
-	b->children.at(0)->children.at(0)->children.at(0)->addChildren(end8);
-
-	b->children.at(0)->children.at(1)->children.at(0)->addChildren(end9);
-	b->children.at(0)->children.at(1)->children.at(0)->addChildren(end10);
-
-	//aumenta o comprimento desses 4 ramos
-	b->children.at(0)->children.at(0)->children.at(0)->children.at(0)->addChildren(end11);
-	b->children.at(0)->children.at(0)->children.at(0)->children.at(1)->addChildren(end12);
-
-	b->children.at(0)->children.at(1)->children.at(0)->children.at(0)->addChildren(end13);
-	b->children.at(0)->children.at(1)->children.at(0)->children.at(1)->addChildren(end14);
-
-	//trata dos targets
-	b->children.at(0)->children.at(0)->children.at(0)->children.at(0)->children.at(0)->setTarget(-4, 6, 0);
-	b->children.at(0)->children.at(0)->children.at(0)->children.at(1)->children.at(0)->setTarget(-2, 6, 0);
-	b->children.at(0)->children.at(1)->children.at(0)->children.at(0)->children.at(0)->setTarget(2, 6, 0);
-	b->children.at(0)->children.at(1)->children.at(0)->children.at(1)->children.at(0)->setTarget(4, 6, 0);
-
-	targets[0] = b->children.at(0)->children.at(0)->children.at(0)->children.at(0)->children.at(0);
-	targets[1] = b->children.at(0)->children.at(0)->children.at(0)->children.at(1)->children.at(0);
-	targets[2] = b->children.at(0)->children.at(1)->children.at(0)->children.at(0)->children.at(0);
-	targets[3] = b->children.at(0)->children.at(1)->children.at(0)->children.at(1)->children.at(0);
+	targets[3] = down->children.at(0)->children.at(0)->children.at(0);
+	targets[4] = down->children.at(1)->children.at(0)->children.at(0);
 
 	//target_s=b->children.at(0)->children.at(0)->children.at(0)->children.at(0)->children.at(0);
 	//target_s_2=b->children.at(0)->children.at(1)->children.at(0)->children.at(1)->children.at(0);

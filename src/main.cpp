@@ -15,6 +15,8 @@ skeleton* b;
 float alfa = 0.0f, beta = 0.5f, radius = 20.0f;
 float camX = 0, camY = 5, camZ = 20;
 float rot = 0;
+int winid = 0;
+
 
 int controlling;
 
@@ -38,8 +40,6 @@ void processKeys(unsigned char c, int xx, int yy) {
 	{
 	case 'q':
 		targets[controlling]->target[1] += 0.5;
-
-
 		break;
 	case 'e':
 		targets[controlling]->target[1] -= 0.5;
@@ -69,6 +69,10 @@ void processKeys(unsigned char c, int xx, int yy) {
 		break;
 	case 'o':
 		b->changeoutwards();
+		break;
+	case 27:
+		glutDestroyWindow(winid);
+		exit(0);
 		break;
 	default:
 		break;
@@ -463,7 +467,7 @@ int main(int argc, char** argv) {
 	glutInitDisplayMode(GLUT_DEPTH | GLUT_DOUBLE | GLUT_RGBA);
 	glutInitWindowPosition(100, 100);
 	glutInitWindowSize(799, 599);
-	glutCreateWindow("CG@DI");
+	winid = glutCreateWindow("CG@DI");
 	// put callback registration here
 
 	glutDisplayFunc(renderScene);

@@ -19,7 +19,7 @@ Bone::Bone()
 	this->size = 1;
 }
 
-Bone::Bone(float in_start[3], float in_end[3])
+Bone::Bone(float in_start[3], float in_end[3],float angle_in, float angle_vector_in[3], float angle_out, float angle_vector_out[3])
 {
 	this->start[0] = in_start[0];
 	this->start[1] = in_start[1];
@@ -28,6 +28,18 @@ Bone::Bone(float in_start[3], float in_end[3])
 	this->end[0] = in_end[0];
 	this->end[1] = in_end[1];
 	this->end[2] = in_end[2];
+
+	this->angle_in = angle_in;
+
+	this->angle_vector_in[0] = angle_vector_in[0];
+	this->angle_vector_in[1] = angle_vector_in[1];
+	this->angle_vector_in[2] = angle_vector_in[2];
+
+	this->angle_out = angle_out;
+
+	this->angle_vector_out[0] = angle_vector_out[0];
+	this->angle_vector_out[1] = angle_vector_out[1];
+	this->angle_vector_out[2] = angle_vector_out[2];
 
 	this->size = sqrtf(powf(end[0] - start[0], 2) + powf(end[1] - start[1], 2) + powf(end[2] - start[2], 2));
 

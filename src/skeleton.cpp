@@ -1,10 +1,14 @@
 #include "skeleton.h"
 #include "Bone.h"
-
+#include<GL/glut.h>
+#include"glm/glm/glm.hpp"
+#include"glm/glm/gtx/rotate_vector.hpp"
 
 bool inwards = true;
 bool outwards = true;
 bool restrictions = true;
+
+
 
 
 void skeleton::changeinwards() {
@@ -20,9 +24,9 @@ void skeleton::changerestrictions() {
 }
 
 
-void skeleton::addChildren(float in_end[3])
+void skeleton::addChildren(float in_end[3],float angle_in,float angle_vector_in[3], float angle_out, float angle_vector_out[3])
 {
-	skeleton* s = new skeleton(this->me->end, in_end);
+	skeleton* s = new skeleton(this->me->end, in_end,angle_in,angle_vector_in, angle_out, angle_vector_out);
 
 	s->setParent(this);
 	this->children.push_back(s);
@@ -248,25 +252,6 @@ void skeleton::update(float target[3], float* return_effector)
 
 }
 
-void skeleton::tempSkeleton(int path, skeleton* ret) {
-
-	skeleton* aux = this;
-	while (aux->children.empty() == false)
-	{
-		if (aux->children.size() == 1) {
-			ret->addChildren(aux->children.at(0)->me->end);
-			ret->setTarget(aux->children.at(0)->target[0], aux->children.at(0)->target[1], aux->children.at(0)->target[2]);
-			aux = aux->children.at(0);
-		}
-		else {
-			ret->addChildren(aux->children.at(path)->me->end);
-			ret->setTarget(aux->children.at(path)->target[0], aux->children.at(path)->target[1], aux->children.at(path)->target[2]);
-			aux = aux->children.at(path);
-
-		}
-	}
-
-}
 
 
 void skeleton::applyRestrictions(float firstVecX, float firstVecY, float firstVecZ) {
@@ -275,32 +260,20 @@ void skeleton::applyRestrictions(float firstVecX, float firstVecY, float firstVe
 
 void rotate(float original[3], float target_vector[3],float angle ,float res[3]) {
 
-	float v2[3];
-
-	cross_skel(original, target_vector, v2);
-
-	normalize_skel(v2);
-
-	float c = cos(angle);
-	float s = sin(angle);
-	float C = 1.0 - c;
-
-	float Q[3][3];
-	Q[0][0] = v2[0] * v2[0] * C + c;
-	Q[0][1] = v2[1] * v2[0] * C + v2[2] * s;
-	Q[0][2] = v2[2] * v2[0] * C - v2[1] * s;
-
-	Q[1][0] = v2[1] * v2[0] * C - v2[2] * s;
-	Q[1][1] = v2[1] * v2[1] * C + c;
-	Q[1][2] = v2[2] * v2[1] * C + v2[0] * s;
-
-	Q[2][0] = v2[0] * v2[2] * C + v2[1] * s;
-	Q[2][1] = v2[2] * v2[1] * C - v2[0] * s;
-	Q[2][2] = v2[2] * v2[2] * C + c;
+	glm::dvec3 v(original[0], original[1], original[2]);
 	
-	res[0] = original[0] * Q[0][0] + original[0] * Q[0][1] + original[0] * Q[0][2];
-	res[1] = original[1] * Q[1][0] + original[1] * Q[1][1] + original[1] * Q[1][2];
-	res[2] = original[2] * Q[2][0] + original[2] * Q[2][1] + original[2] * Q[2][2];
+	float perp[3];
+	cross_skel(original, target_vector, perp);
+	
+	glm::dvec3 k(perp[0], perp[1], perp[2]);
+
+	double theta = angle;
+
+	glm::dvec3 rotated = glm::rotate(v, theta, k);
+
+	res[0] = rotated.x;
+	res[1] = rotated.y;
+	res[2] = rotated.z;
 
 }
 
@@ -345,9 +318,17 @@ bool skeleton::multiUpdateIn(float* originalX, float* originalY, float* original
 			//------restrições
 			//vai calcular o vetor para as restrições seguintes
 			float vector[3];
-			vector[0] = chain.at(i)->me->start[0] - chain.at(i)->me->end[0];
-			vector[1] = chain.at(i)->me->start[1] - chain.at(i)->me->end[1];
-			vector[2] = chain.at(i)->me->start[2] - chain.at(i)->me->end[2];
+			if (chain.at(i)->me->angle_vector_in[0] == 0 && chain.at(i)->me->angle_vector_in[1] == 0 && chain.at(i)->me->angle_vector_in[2] == 0) {
+				vector[0] = chain.at(i)->me->start[0] - chain.at(i)->me->end[0];
+				vector[1] = chain.at(i)->me->start[1] - chain.at(i)->me->end[1];
+				vector[2] = chain.at(i)->me->start[2] - chain.at(i)->me->end[2];
+			}
+			else {
+				vector[0] = chain.at(i)->me->angle_vector_in[0];
+				vector[1] = chain.at(i)->me->angle_vector_in[1];
+				vector[2] = chain.at(i)->me->angle_vector_in[2];
+			}
+			
 
 			normalize_skel(vector);
 
@@ -376,81 +357,100 @@ bool skeleton::multiUpdateIn(float* originalX, float* originalY, float* original
 					chain.at(i - 1)->me->end[2] = temp3;
 				}
 
+
+
 				//-------restriçoes
 				//Vai fazer a restrição para todos menos o primeiro
 				//vai verificar se o chain.at(i).start esta no sitio certo
 				//vector[3] é o vetor que esta no centro do cone
-				if (restrictions == true) {
-					if (i != chain.size() - 1) {
-						//Vai ver se o ponto esta dentro ou fora do cone
-						float point[3];
+				
+				
+				if (i < chain.size() - 1) {
+					//Vai ver se o ponto esta dentro ou fora do cone
+					float point[3];
 
-						point[0] = chain.at(i)->me->start[0];
-						point[1] = chain.at(i)->me->start[1];
-						point[2] = chain.at(i)->me->start[2];
+					point[0] = chain.at(i)->me->start[0];
+					point[1] = chain.at(i)->me->start[1];
+					point[2] = chain.at(i)->me->start[2];
 
-						float vector_teste[3];
-						vector_teste[0] = point[0] - chain.at(i)->me->end[0];
-						vector_teste[1] = point[1] - chain.at(i)->me->end[1];
-						vector_teste[2] = point[2] - chain.at(i)->me->end[2];
+					float original_point[3];
+					original_point[0] = chain.at(i + 1)->me->start[0];
+					original_point[1] = chain.at(i + 1)->me->start[1];
+					original_point[2] = chain.at(i + 1)->me->start[2];
 
-						normalize_skel(vector_teste);
+					float angle = chain.at(i)->me->angle_in;
 
-						float dot = vector[0] * vector_teste[0] + vector[1] * vector_teste[1] + vector[2] * vector_teste[2];
+					float vector_teste[3];
+					vector_teste[0] = point[0] - original_point[0];
+					vector_teste[1] = point[1] - original_point[1];
+					vector_teste[2] = point[2] - original_point[2];
 
-						float acos = acosf(dot);
+					normalize_skel(vector_teste);
 
-						//printf("Acos %f \n", acos);
-						//0,78 sao 45 graus, se tiver maior que 45 graus esta fora e vai ter de fazer alguma coisa
-						if (acos > 1.57) {
+					float dot = vector[0] * vector_teste[0] + vector[1] * vector_teste[1] + vector[2] * vector_teste[2];
+					//dot = (dot < -1.0 ? -1.0 : (dot > 1.0 ? 1.0 : dot));
+					float acos = acosf(dot);
 
-							float resultado[3];
+					//printf("Acos %f \n", acos);
+					//0,78 sao 45 graus, se tiver maior que 45 graus esta fora e vai ter de fazer alguma coisa
+					if (acos > angle) {
+
+						printf("entrou no if no multiIN ponto : %f %f %f angulo %f max %f \n", point[0], point[1], point[2],acos,angle);
 							
-							rotate(vector, vector_teste, acos ,resultado);
+						float resultado[3];
+							
+						rotate(vector, vector_teste, angle ,resultado);
 
-							normalize_skel(resultado);
+						normalize_skel(resultado);
+						printf("Vector %f %f %f  vectorTeste %f %f %f resultado %f %f %f\n", vector[0], vector[1], vector[2], vector_teste[0], vector_teste[1], vector_teste[2], resultado[0], resultado[1], resultado[2]);
+						double dist;
+						dist = chain.at(i)->me->size;
 
-							double dist;
-							dist = sqrt(pow((double) point[0] - (double)chain.at(i)->me->end[0], 2) + pow((double)point[2] - (double)chain.at(i)->me->end[2], 2) + pow((double)point[2] - (double)chain.at(i)->me->end[2], 2));
+						resultado[0] = resultado[0] *dist + original_point[0];
+						resultado[1] = resultado[1] * dist + original_point[1];
+						resultado[2] = resultado[2] * dist + original_point[2];
 
-							resultado[0] = resultado[0] * dist + point[0];
-							resultado[1] = resultado[1] * dist + point[1];
-							resultado[2] = resultado[2] * dist + point[2];
-
-							chain.at(i)->me->start[0] = resultado[0];
-							chain.at(i)->me->start[1] = resultado[1];
-							chain.at(i)->me->start[2] = resultado[2];
-							if (i != 0) {
-								chain.at(i - 1)->me->end[0] = resultado[0];
-								chain.at(i - 1)->me->end[1] = resultado[1];
-								chain.at(i - 1)->me->end[2] = resultado[2];
-							}
-						}
-
-						//preparar o vetor para a prox iteração
-						//nao precisa fazer nada no ultimo
+						chain.at(i)->me->start[0] = resultado[0];
+						chain.at(i)->me->start[1] = resultado[1];
+						chain.at(i)->me->start[2] = resultado[2];
 						if (i != 0) {
-							vector[0] = chain.at(i - 1)->me->start[0] - chain.at(i - 1)->me->end[0];
-							vector[1] = chain.at(i - 1)->me->start[1] - chain.at(i - 1)->me->end[1];
-							vector[2] = chain.at(i - 1)->me->start[2] - chain.at(i - 1)->me->end[2];
-
-							normalize_skel(vector);
-						}
-						//so posso adicionar aqui à lista porque tenho de esperar que as correções sejam feitas pelas restrições
-						if (i == 0) {
-							positions.push_back(chain.at(i)->me->start[0]);
-							positions.push_back(chain.at(i)->me->start[1]);
-							positions.push_back(chain.at(i)->me->start[2]);
+							chain.at(i - 1)->me->end[0] = resultado[0];
+							chain.at(i - 1)->me->end[1] = resultado[1];
+							chain.at(i - 1)->me->end[2] = resultado[2];
 						}
 					}
-				}
-				else {
+
+					//preparar o vetor para a prox iteração
+					//nao precisa fazer nada no ultimo
+						
+
+
+					if (chain.at(i)->me->angle_vector_in[0] == 0 && chain.at(i)->me->angle_vector_in[1] == 0 && chain.at(i)->me->angle_vector_in[2] == 0) {
+						vector[0] = chain.at(i)->me->start[0] - chain.at(i)->me->end[0];
+						vector[1] = chain.at(i)->me->start[1] - chain.at(i)->me->end[1];
+						vector[2] = chain.at(i)->me->start[2] - chain.at(i)->me->end[2];
+					}
+					else {
+						vector[0] = chain.at(i-1)->me->angle_vector_in[0];
+						vector[1] = chain.at(i-1)->me->angle_vector_in[1];
+						vector[2] = chain.at(i-1)->me->angle_vector_in[2];
+					}
+
+					//vector[0] = chain.at(i - 1)->me->start[0] - chain.at(i - 1)->me->end[0];
+					//vector[1] = chain.at(i - 1)->me->start[1] - chain.at(i - 1)->me->end[1];
+					//vector[2] = chain.at(i - 1)->me->start[2] - chain.at(i - 1)->me->end[2];
+
+					normalize_skel(vector);
+						
+					//so posso adicionar aqui à lista porque tenho de esperar que as correções sejam feitas pelas restrições
 					if (i == 0) {
 						positions.push_back(chain.at(i)->me->start[0]);
 						positions.push_back(chain.at(i)->me->start[1]);
 						positions.push_back(chain.at(i)->me->start[2]);
 					}
 				}
+				
+				
 
 
 
@@ -529,9 +529,21 @@ bool skeleton::multiUpdateIn(float* originalX, float* originalY, float* original
 	//------restrições
 			//vai calcular o vetor para as restrições seguintes
 	float vector[3];
-	vector[0] = chain.at(i)->me->start[0] - chain.at(i)->me->end[0];
-	vector[1] = chain.at(i)->me->start[1] - chain.at(i)->me->end[1];
-	vector[2] = chain.at(i)->me->start[2] - chain.at(i)->me->end[2];
+
+	if (chain.at(i)->me->angle_vector_in[0] == 0 && chain.at(i)->me->angle_vector_in[1] == 0 && chain.at(i)->me->angle_vector_in[2] == 0) {
+		vector[0] = chain.at(i)->me->start[0] - chain.at(i)->me->end[0];
+		vector[1] = chain.at(i)->me->start[1] - chain.at(i)->me->end[1];
+		vector[2] = chain.at(i)->me->start[2] - chain.at(i)->me->end[2];
+	}
+	else {
+		vector[0] = chain.at(i)->me->angle_vector_in[0];
+		vector[1] = chain.at(i)->me->angle_vector_in[1];
+		vector[2] = chain.at(i)->me->angle_vector_in[2];
+	}
+
+	//vector[0] = chain.at(i)->me->start[0] - chain.at(i)->me->end[0];
+	//vector[1] = chain.at(i)->me->start[1] - chain.at(i)->me->end[1];
+	//vector[2] = chain.at(i)->me->start[2] - chain.at(i)->me->end[2];
 
 	normalize_skel(vector);
 
@@ -558,64 +570,79 @@ bool skeleton::multiUpdateIn(float* originalX, float* originalY, float* original
 			chain.at(i - 1)->me->end[2] = temp3;
 		}
 
-		if (restrictions == true) {
-			if (i != chain.size() - 1) {
-				//Vai ver se o ponto esta dentro ou fora do cone
-				float point[3];
+		
+		if (i < chain.size() - 1) {
+			//Vai ver se o ponto esta dentro ou fora do cone
+			float point[3];
 
-				point[0] = chain.at(i)->me->start[0];
-				point[1] = chain.at(i)->me->start[1];
-				point[2] = chain.at(i)->me->start[2];
+			point[0] = chain.at(i)->me->start[0];
+			point[1] = chain.at(i)->me->start[1];
+			point[2] = chain.at(i)->me->start[2];
 
-				float vector_teste[3];
-				vector_teste[0] = point[0] - chain.at(i)->me->end[0];
-				vector_teste[1] = point[1] - chain.at(i)->me->end[1];
-				vector_teste[2] = point[2] - chain.at(i)->me->end[2];
+			float original_point[3];
+			original_point[0] = chain.at(i + 1)->me->start[0];
+			original_point[1] = chain.at(i + 1)->me->start[1];
+			original_point[2] = chain.at(i + 1)->me->start[2];
 
-				normalize_skel(vector_teste);
+			//vai buscar o angulo do osso
+			float angle = chain.at(i)->me->angle_in;
 
-				float dot = vector[0] * vector_teste[0] + vector[1] * vector_teste[1] + vector[2] * vector_teste[2];
+			float vector_teste[3];
+			vector_teste[0] = point[0] - original_point[0];
+			vector_teste[1] = point[1] - original_point[1];
+			vector_teste[2] = point[2] - original_point[2];
 
-				float acos = acosf(dot);
+			normalize_skel(vector_teste);
 
-				//printf("Acos %f \n", acos);
-				//0,78 sao 45 graus, se tiver maior que 45 graus esta fora e vai ter de fazer alguma coisa
-				if (acos > 1.57) {
+			float dot = vector[0] * vector_teste[0] + vector[1] * vector_teste[1] + vector[2] * vector_teste[2];
+				
+			float acos = acosf(dot);
 
-					float resultado[3];
+			//printf("Acos %f \n", acos);
+			//0,78 sao 45 graus, se tiver maior que 45 graus esta fora e vai ter de fazer alguma coisa
+			if (acos > angle) {
 
-					rotate(vector, vector_teste, acos, resultado);
+				float resultado[3];
 
-					normalize_skel(resultado);
+				rotate(vector, vector_teste, angle, resultado);
 
-					double dist;
-					dist = sqrt(pow((double)point[0] - (double)chain.at(i)->me->end[0], 2) + pow((double)point[2] - (double)chain.at(i)->me->end[2], 2) + pow((double)point[2] - (double)chain.at(i)->me->end[2], 2));
+				normalize_skel(resultado);
 
-					resultado[0] = resultado[0] * dist + point[0];
-					resultado[1] = resultado[1] * dist + point[1];
-					resultado[2] = resultado[2] * dist + point[2];
+				double dist;
+				dist = sqrt(pow((double)point[0] - (double)chain.at(i)->me->end[0], 2) + pow((double)point[2] - (double)chain.at(i)->me->end[2], 2) + pow((double)point[2] - (double)chain.at(i)->me->end[2], 2));
 
-					chain.at(i)->me->start[0] = resultado[0];
-					chain.at(i)->me->start[1] = resultado[1];
-					chain.at(i)->me->start[2] = resultado[2];
-					if (i != 0) {
-						chain.at(i - 1)->me->end[0] = resultado[0];
-						chain.at(i - 1)->me->end[1] = resultado[1];
-						chain.at(i - 1)->me->end[2] = resultado[2];
-					}
+				resultado[0] = resultado[0] * dist + original_point[0];
+				resultado[1] = resultado[1] * dist + original_point[1];
+				resultado[2] = resultado[2] * dist + original_point[2];
 
-				}
-				//preparar o vetor para a prox iteração
-				//nao precisa fazer nada no ultimo
+				chain.at(i)->me->start[0] = resultado[0];
+				chain.at(i)->me->start[1] = resultado[1];
+				chain.at(i)->me->start[2] = resultado[2];
 				if (i != 0) {
-					vector[0] = chain.at(i - 1)->me->start[0] - chain.at(i - 1)->me->end[0];
-					vector[1] = chain.at(i - 1)->me->start[1] - chain.at(i - 1)->me->end[1];
-					vector[2] = chain.at(i - 1)->me->start[2] - chain.at(i - 1)->me->end[2];
-
-					normalize_skel(vector);
+					chain.at(i - 1)->me->end[0] = resultado[0];
+					chain.at(i - 1)->me->end[1] = resultado[1];
+					chain.at(i - 1)->me->end[2] = resultado[2];
 				}
 
 			}
+			//preparar o vetor para a prox iteração
+			//nao precisa fazer nada no ultimo
+			if (i != 0) {
+
+				if (chain.at(i)->me->angle_vector_in[0] == 0 && chain.at(i)->me->angle_vector_in[1] == 0 && chain.at(i)->me->angle_vector_in[2] == 0) {
+					vector[0] = chain.at(i - 1)->me->start[0] - chain.at(i)->me->end[0];
+					vector[1] = chain.at(i - 1)->me->start[1] - chain.at(i)->me->end[1];
+					vector[2] = chain.at(i - 1)->me->start[2] - chain.at(i)->me->end[2];
+				}
+				else {
+					vector[0] = chain.at(i - 1)->me->angle_vector_in[0];
+					vector[1] = chain.at(i - 1)->me->angle_vector_in[1];
+					vector[2] = chain.at(i - 1)->me->angle_vector_in[2];
+				}
+
+				normalize_skel(vector);
+			}
+
 		}
 
 
@@ -638,9 +665,17 @@ void skeleton::multiUpdateOut(float originalX, float originalY, float originalZ)
 	//------restrições
 			//vai calcular o vetor para as restrições seguintes
 	float vector[3];
-	vector[0] = chain_root.at(0)->me->end[0] - chain_root.at(0)->me->start[0];
-	vector[1] = chain_root.at(0)->me->end[1] - chain_root.at(0)->me->start[1];
-	vector[2] = chain_root.at(0)->me->end[2] - chain_root.at(0)->me->start[2];
+
+	if (chain_root.at(0)->me->angle_vector_out[0] == 0 && chain_root.at(0)->me->angle_vector_out[1] == 0 && chain_root.at(0)->me->angle_vector_out[2] == 0) {
+		vector[0] = chain_root.at(0)->me->end[0] - chain_root.at(0)->me->start[0];
+		vector[1] = chain_root.at(0)->me->end[1] - chain_root.at(0)->me->start[1];
+		vector[2] = chain_root.at(0)->me->end[2] - chain_root.at(0)->me->start[2];
+	}
+	else {
+		vector[0] = chain_root.at(0)->me->angle_vector_out[0];
+		vector[1] = chain_root.at(0)->me->angle_vector_out[1];
+		vector[2] = chain_root.at(0)->me->angle_vector_out[2];
+	}
 
 	normalize_skel(vector);
 
@@ -667,17 +702,24 @@ void skeleton::multiUpdateOut(float originalX, float originalY, float originalZ)
 		}
 		
 		
-		if (restrictions == true) {
+		if (i>0) {
 			float point[3];
 
 			point[0] = chain_root.at(i)->me->end[0];
 			point[1] = chain_root.at(i)->me->end[1];
 			point[2] = chain_root.at(i)->me->end[2];
 
+			float original_point[3];
+			original_point[0] = chain_root.at(i)->me->start[0];
+			original_point[1] = chain_root.at(i)->me->start[1];
+			original_point[2] = chain_root.at(i)->me->start[2];
+
+			float angle = chain_root.at(i)->me->angle_out;
+
 			float vector_teste[3];
-			vector_teste[0] = point[0] - chain_root.at(i)->me->end[0];
-			vector_teste[1] = point[1] - chain_root.at(i)->me->end[1];
-			vector_teste[2] = point[2] - chain_root.at(i)->me->end[2];
+			vector_teste[0] = point[0] - original_point[0];
+			vector_teste[1] = point[1] - original_point[1];
+			vector_teste[2] = point[2] - original_point[2];
 
 			normalize_skel(vector_teste);
 
@@ -687,29 +729,42 @@ void skeleton::multiUpdateOut(float originalX, float originalY, float originalZ)
 
 			//printf("Acos %f \n", acos);
 			//0,78 sao 45 graus, se tiver maior que 45 graus esta fora e vai ter de fazer alguma coisa
-			if (acos > 1.57) {
+			if (acos > angle) {
 				float resultado[3];
-				rotate(vector, vector_teste, acos, resultado);
+				rotate(vector, vector_teste, angle, resultado);
 
 				normalize_skel(resultado);
 
 				double dist;
-				dist = sqrt(pow((double)point[0] - (double)chain_root.at(i)->me->start[0], 2) + pow((double)point[2] - (double)chain_root.at(i)->me->start[2], 2) + pow((double)point[2] - (double)chain_root.at(i)->me->start[2], 2));
+				dist = chain_root.at(i)->me->size;
 
-				resultado[0] = resultado[0] * dist + point[0];
-				resultado[1] = resultado[1] * dist + point[1];
-				resultado[2] = resultado[2] * dist + point[2];
+				resultado[0] = resultado[0] * dist + original_point[0];
+				resultado[1] = resultado[1] * dist + original_point[1];
+				resultado[2] = resultado[2] * dist + original_point[2];
 
 				chain_root.at(i)->me->end[0] = resultado[0];
 				chain_root.at(i)->me->end[1] = resultado[1];
 				chain_root.at(i)->me->end[2] = resultado[2];
-				chain_root.at(i + 1)->me->start[0] = resultado[0];
-				chain_root.at(i + 1)->me->start[1] = resultado[1];
-				chain_root.at(i + 1)->me->start[2] = resultado[2];
 
-				vector[0] = chain_root.at(i)->me->end[0] - chain_root.at(i)->me->start[0];
-				vector[1] = chain_root.at(i)->me->end[1] - chain_root.at(i)->me->start[1];
-				vector[2] = chain_root.at(i)->me->end[2] - chain_root.at(i)->me->start[2];
+				if (i < chain_root.size() - 1) {
+					chain_root.at(i + 1)->me->start[0] = resultado[0];
+					chain_root.at(i + 1)->me->start[1] = resultado[1];
+					chain_root.at(i + 1)->me->start[2] = resultado[2];
+				}
+				
+
+				if (chain_root.at(i)->me->angle_vector_out[0] == 0 && chain_root.at(i)->me->angle_vector_out[1] == 0 && chain_root.at(i)->me->angle_vector_out[2] == 0) {
+					vector[0] = chain_root.at(i)->me->end[0] - chain_root.at(i)->me->start[0];
+					vector[1] = chain_root.at(i)->me->end[1] - chain_root.at(i)->me->start[1];
+					vector[2] = chain_root.at(i)->me->end[2] - chain_root.at(i)->me->start[2];
+				}
+				else {
+					vector[0] = chain_root.at(i)->me->angle_vector_out[0];
+					vector[1] = chain_root.at(i)->me->angle_vector_out[1];
+					vector[2] = chain_root.at(i)->me->angle_vector_out[2];
+				}
+
+				
 
 				normalize_skel(vector);
 
@@ -743,10 +798,17 @@ void skeleton::multiUpdateOut(float originalX, float originalY, float originalZ)
 			//------restrições
 			//vai calcular o vetor para as restrições seguintes
 			float vector[3];
-			vector[0] = chain_2.at(0)->me->end[0] - chain_2.at(0)->me->start[0];
-			vector[1] = chain_2.at(0)->me->end[1] - chain_2.at(0)->me->start[1];
-			vector[2] = chain_2.at(0)->me->end[2] - chain_2.at(0)->me->start[2];
 
+			if (chain_2.at(0)->me->angle_vector_out[0] == 0 && chain_2.at(0)->me->angle_vector_out[1] == 0 && chain_2.at(0)->me->angle_vector_out[2] == 0) {
+				vector[0] = chain_2.at(0)->me->end[0] - chain_2.at(0)->me->start[0];
+				vector[1] = chain_2.at(0)->me->end[1] - chain_2.at(0)->me->start[1];
+				vector[2] = chain_2.at(0)->me->end[2] - chain_2.at(0)->me->start[2];
+			}
+			else {
+				vector[0] = chain_2.at(0)->me->angle_vector_out[0];
+				vector[1] = chain_2.at(0)->me->angle_vector_out[1];
+				vector[2] = chain_2.at(0)->me->angle_vector_out[2];
+			}
 			normalize_skel(vector);
 
 			//------restrições
@@ -772,17 +834,25 @@ void skeleton::multiUpdateOut(float originalX, float originalY, float originalZ)
 					chain_2.at(i + 1)->me->start[2] = temp3;
 				}
 				
-				if (restrictions == true) {
+				if (i>0) {
 					float point[3];
 
 					point[0] = chain_2.at(i)->me->end[0];
 					point[1] = chain_2.at(i)->me->end[1];
 					point[2] = chain_2.at(i)->me->end[2];
 
+					float original_point[3];
+					original_point[0] = chain_2.at(i)->me->start[0];
+					original_point[1] = chain_2.at(i)->me->start[1];
+					original_point[2] = chain_2.at(i)->me->start[2];
+
+					float angle = chain_2.at(i)->me->angle_out;
+
 					float vector_teste[3];
-					vector_teste[0] = point[0] - chain_2.at(i)->me->end[0];
-					vector_teste[1] = point[1] - chain_2.at(i)->me->end[1];
-					vector_teste[2] = point[2] - chain_2.at(i)->me->end[2];
+
+					vector_teste[0] = point[0] - original_point[0];
+					vector_teste[1] = point[1] - original_point[1];
+					vector_teste[2] = point[2] - original_point[2];
 
 					normalize_skel(vector_teste);
 
@@ -792,83 +862,47 @@ void skeleton::multiUpdateOut(float originalX, float originalY, float originalZ)
 
 					//printf("Acos %f \n", acos);
 					//0,78 sao 45 graus, se tiver maior que 45 graus esta fora e vai ter de fazer alguma coisa
-					if (acos > 1.57) {
+					if (acos > angle) {
+						printf("entrou no if no multiOUT\n");
 						float resultado[3];
-						rotate(vector, vector_teste, acos, resultado);
+						rotate(vector, vector_teste, angle, resultado);
 
 						normalize_skel(resultado);
 
 						double dist;
-						dist = sqrt(pow((double) point[0] - (double)chain_2.at(i)->me->start[0], 2) + pow((double)point[2] - (double)chain_2.at(i)->me->start[2], 2) + pow((double)point[2] - (double)chain_2.at(i)->me->start[2], 2));
+						dist = chain_2.at(i)->me->size;
 
-						resultado[0] = resultado[0] * dist + point[0];
-						resultado[1] = resultado[1] * dist + point[1];
-						resultado[2] = resultado[2] * dist + point[2];
+						resultado[0] = resultado[0] * dist + original_point[0];
+						resultado[1] = resultado[1] * dist + original_point[1];
+						resultado[2] = resultado[2] * dist + original_point[2];
 
 						chain_2.at(i)->me->end[0] = resultado[0];
 						chain_2.at(i)->me->end[1] = resultado[1];
 						chain_2.at(i)->me->end[2] = resultado[2];
-						chain_2.at(i + 1)->me->start[0] = resultado[0];
-						chain_2.at(i + 1)->me->start[1] = resultado[1];
-						chain_2.at(i + 1)->me->start[2] = resultado[2];
+						if (i < chain_2.size() - 1) {
+							chain_2.at(i + 1)->me->start[0] = resultado[0];
+							chain_2.at(i + 1)->me->start[1] = resultado[1];
+							chain_2.at(i + 1)->me->start[2] = resultado[2];
+						}
+						
 
-						vector[0] = chain_2.at(i)->me->end[0] - chain_2.at(i)->me->start[0];
-						vector[1] = chain_2.at(i)->me->end[1] - chain_2.at(i)->me->start[1];
-						vector[2] = chain_2.at(i)->me->end[2] - chain_2.at(i)->me->start[2];
+						if (chain_2.at(i)->me->angle_vector_out[0] == 0 && chain_2.at(i)->me->angle_vector_out[1] == 0 && chain_2.at(i)->me->angle_vector_out[2] == 0) {
+							vector[0] = chain_2.at(i)->me->end[0] - chain_2.at(i)->me->start[0];
+							vector[1] = chain_2.at(i)->me->end[1] - chain_2.at(i)->me->start[1];
+							vector[2] = chain_2.at(i)->me->end[2] - chain_2.at(i)->me->start[2];
+						}
+						else {
+							vector[0] = chain_2.at(i)->me->angle_vector_out[0];
+							vector[1] = chain_2.at(i)->me->angle_vector_out[1];
+							vector[2] = chain_2.at(i)->me->angle_vector_out[2];
+						}
+						
 
 						normalize_skel(vector);
 
 
 					}
-				if (restrictions == true) {
-					float point[3];
-
-					point[0] = chain_2.at(i)->me->end[0];
-					point[1] = chain_2.at(i)->me->end[1];
-					point[2] = chain_2.at(i)->me->end[2];
-
-					float vector_teste[3];
-					vector_teste[0] = point[0] - chain_2.at(i)->me->end[0];
-					vector_teste[1] = point[1] - chain_2.at(i)->me->end[1];
-					vector_teste[2] = point[2] - chain_2.at(i)->me->end[2];
-
-					normalize_skel(vector_teste);
-
-					float dot = vector[0] * vector_teste[0] + vector[1] * vector_teste[1] + vector[2] * vector_teste[2];
-
-					float acos = acosf(dot);
-
-					//printf("Acos %f \n", acos);
-					//0,78 sao 45 graus, se tiver maior que 45 graus esta fora e vai ter de fazer alguma coisa
-					if (acos > 1.57) {
-						float resultado[3];
-						rotate(vector, vector_teste, acos, resultado);
-
-						normalize_skel(resultado);
-
-						double dist;
-						dist = sqrt(pow((double) point[0] - (double)chain_2.at(i)->me->start[0], 2) + pow((double)point[2] - (double)chain_2.at(i)->me->start[2], 2) + pow((double)point[2] - (double)chain_2.at(i)->me->start[2], 2));
-
-						resultado[0] = resultado[0] * dist + point[0];
-						resultado[1] = resultado[1] * dist + point[1];
-						resultado[2] = resultado[2] * dist + point[2];
-
-						chain_2.at(i)->me->end[0] = resultado[0];
-						chain_2.at(i)->me->end[1] = resultado[1];
-						chain_2.at(i)->me->end[2] = resultado[2];
-						chain_2.at(i + 1)->me->start[0] = resultado[0];
-						chain_2.at(i + 1)->me->start[1] = resultado[1];
-						chain_2.at(i + 1)->me->start[2] = resultado[2];
-
-						vector[0] = chain_2.at(i)->me->end[0] - chain_2.at(i)->me->start[0];
-						vector[1] = chain_2.at(i)->me->end[1] - chain_2.at(i)->me->start[1];
-						vector[2] = chain_2.at(i)->me->end[2] - chain_2.at(i)->me->start[2];
-
-						normalize_skel(vector);
-
-
-					}
-				}
+				
 				}
 				
 
@@ -883,23 +917,17 @@ void skeleton::multiUpdateOut(float originalX, float originalY, float originalZ)
 
 void skeleton::multiUpdate(skeleton* targets[4])
 {
+	float vec1[3] = {0,1,0};
+	float vec2[3] = { 1,0,0 };
+	float res[3];
 
+	rotate(vec1, vec2, 0.7, res);
 
+	printf("O resultado deu %f %f %f \n", res[0], res[1], res[2]);
 
 	float originalx, originaly, originalz;
 	for (int k = 0; k < 1; k++)
 	{
-
-		//vai criar um skeleton para depois ele usar como placeholder
-		//tem de se fazer pelo menos a inicialização de B com um valor placeholder
-		//estou a criar aqui para garantir que nao perde o scope
-		skeleton* placeholder;
-		//float start[3] = { 0,0,0 };
-		//float end[3] = { 0,1,0 };
-
-		//placeholder = new skeleton(start, end);
-
-		//this->save_state(placeholder);
 
 		bool ret = this->multiUpdateIn(&originalx, &originaly, &originalz);
 
@@ -912,252 +940,6 @@ void skeleton::multiUpdate(skeleton* targets[4])
 
 
 }
-
-//poe o estado de this em B
-void skeleton::save_state(skeleton* b) {
-	{
-
-		float start[3] = { this->me->start[0],this->me->start[1],this->me->start[2] };
-		float end[3] = { this->me->end[0],this->me->end[1],this->me->end[2] };
-
-		b->me->start[0] = start[0];
-		b->me->start[1] = start[1];
-		b->me->start[2] = start[2];
-
-		b->me->end[0] = end[0];
-		b->me->end[1] = end[1];
-		b->me->end[2] = end[2];
-
-
-		//skeleton com 4 endpoints mas cada chain tem 2 de comprimento
-
-		float end2[3] = { this->children.at(0)->me->end[0],this->children.at(0)->me->end[1],this->children.at(0)->me->end[2] };
-		b->addChildren(end2);
-
-		float end3[3] = { this->children.at(0)->children.at(0)->me->end[0],this->children.at(0)->children.at(0)->me->end[1],this->children.at(0)->children.at(0)->me->end[2] };
-		float end4[3] = { this->children.at(0)->children.at(0)->children.at(0)->me->end[0],this->children.at(0)->children.at(0)->children.at(0)->me->end[1],this->children.at(0)->children.at(0)->children.at(0)->me->end[2] };
-		float end5[3] = { this->children.at(0)->children.at(1)->me->end[0],this->children.at(0)->children.at(1)->me->end[1],this->children.at(0)->children.at(1)->me->end[2] };
-		float end6[3] = { this->children.at(0)->children.at(1)->children.at(0)->me->end[0],this->children.at(0)->children.at(1)->children.at(0)->me->end[1],this->children.at(0)->children.at(1)->children.at(0)->me->end[2] };
-
-		//adiciona o primeiro ramo
-		b->children.at(0)->addChildren(end3);
-		b->children.at(0)->addChildren(end5);
-
-		//adiciona a cada ramo mais 1 de comprimento
-		b->children.at(0)->children.at(0)->addChildren(end4);
-		b->children.at(0)->children.at(1)->addChildren(end6);
-
-		float end7[3] = { this->children.at(0)->children.at(0)->children.at(0)->children.at(0)->me->end[0],this->children.at(0)->children.at(0)->children.at(0)->children.at(0)->me->end[1],this->children.at(0)->children.at(0)->children.at(0)->children.at(0)->me->end[2] };
-		float end8[3] = { this->children.at(0)->children.at(0)->children.at(0)->children.at(1)->me->end[0],this->children.at(0)->children.at(0)->children.at(0)->children.at(1)->me->end[1],this->children.at(0)->children.at(0)->children.at(0)->children.at(1)->me->end[2] };
-		float end9[3] = { this->children.at(0)->children.at(1)->children.at(0)->children.at(0)->me->end[0],this->children.at(0)->children.at(1)->children.at(0)->children.at(0)->me->end[1],this->children.at(0)->children.at(1)->children.at(0)->children.at(0)->me->end[2] };
-		float end10[3] = { this->children.at(0)->children.at(1)->children.at(0)->children.at(1)->me->end[0],this->children.at(0)->children.at(1)->children.at(0)->children.at(1)->me->end[1],this->children.at(0)->children.at(1)->children.at(0)->children.at(1)->me->end[2] };
-
-		float end11[3] = { this->children.at(0)->children.at(0)->children.at(0)->children.at(0)->children.at(0)->me->end[0],this->children.at(0)->children.at(0)->children.at(0)->children.at(0)->children.at(0)->me->end[1],this->children.at(0)->children.at(0)->children.at(0)->children.at(0)->children.at(0)->me->end[2] };
-		float end12[3] = { this->children.at(0)->children.at(0)->children.at(0)->children.at(1)->children.at(0)->me->end[0],this->children.at(0)->children.at(0)->children.at(0)->children.at(1)->children.at(0)->me->end[1],this->children.at(0)->children.at(0)->children.at(0)->children.at(1)->children.at(0)->me->end[2] };
-		float end13[3] = { this->children.at(0)->children.at(1)->children.at(0)->children.at(0)->children.at(0)->me->end[0],this->children.at(0)->children.at(1)->children.at(0)->children.at(0)->children.at(0)->me->end[1],this->children.at(0)->children.at(1)->children.at(0)->children.at(0)->children.at(0)->me->end[2] };
-		float end14[3] = { this->children.at(0)->children.at(1)->children.at(0)->children.at(1)->children.at(0)->me->end[0],this->children.at(0)->children.at(1)->children.at(0)->children.at(1)->children.at(0)->me->end[1],this->children.at(0)->children.at(1)->children.at(0)->children.at(1)->children.at(0)->me->end[2] };
-
-		//adiciona os 4 novos ramos
-		b->children.at(0)->children.at(0)->children.at(0)->addChildren(end7);
-		b->children.at(0)->children.at(0)->children.at(0)->addChildren(end8);
-
-		b->children.at(0)->children.at(1)->children.at(0)->addChildren(end9);
-		b->children.at(0)->children.at(1)->children.at(0)->addChildren(end10);
-
-		//aumenta o comprimento desses 4 ramos
-		b->children.at(0)->children.at(0)->children.at(0)->children.at(0)->addChildren(end11);
-		b->children.at(0)->children.at(0)->children.at(0)->children.at(1)->addChildren(end12);
-
-		b->children.at(0)->children.at(1)->children.at(0)->children.at(0)->addChildren(end13);
-		b->children.at(0)->children.at(1)->children.at(0)->children.at(1)->addChildren(end14);
-
-		//trata dos targets
-
-		float x, y, z;
-		x = this->children.at(0)->children.at(0)->children.at(0)->children.at(0)->children.at(0)->target[0];
-		y = this->children.at(0)->children.at(0)->children.at(0)->children.at(0)->children.at(0)->target[1];
-		z = this->children.at(0)->children.at(0)->children.at(0)->children.at(0)->children.at(0)->target[2];
-		b->children.at(0)->children.at(0)->children.at(0)->children.at(0)->children.at(0)->setTarget(x, y, z);
-
-		x = this->children.at(0)->children.at(0)->children.at(0)->children.at(1)->children.at(0)->target[0];
-		y = this->children.at(0)->children.at(0)->children.at(0)->children.at(1)->children.at(0)->target[1];
-		z = this->children.at(0)->children.at(0)->children.at(0)->children.at(1)->children.at(0)->target[2];
-
-		b->children.at(0)->children.at(0)->children.at(0)->children.at(1)->children.at(0)->setTarget(x, y, z);
-
-		x = this->children.at(0)->children.at(1)->children.at(0)->children.at(0)->children.at(0)->target[0];
-		y = this->children.at(0)->children.at(1)->children.at(0)->children.at(0)->children.at(0)->target[1];
-		z = this->children.at(0)->children.at(1)->children.at(0)->children.at(0)->children.at(0)->target[2];
-
-		b->children.at(0)->children.at(1)->children.at(0)->children.at(0)->children.at(0)->setTarget(x, y, z);
-
-		x = this->children.at(0)->children.at(1)->children.at(0)->children.at(1)->children.at(0)->target[0];
-		y = this->children.at(0)->children.at(1)->children.at(0)->children.at(1)->children.at(0)->target[1];
-		z = this->children.at(0)->children.at(1)->children.at(0)->children.at(1)->children.at(0)->target[2];
-
-		b->children.at(0)->children.at(1)->children.at(0)->children.at(1)->children.at(0)->setTarget(x, y, z);
-
-	}
-}
-
-//Vai reverter o estado do this para o b
-void skeleton::reverte_state(skeleton* b) {
-	float start[3] = { b->me->start[0],b->me->start[1],b->me->start[2] };
-	float end[3] = { b->me->end[0],b->me->end[1],b->me->end[2] };
-
-	this->me->start[0] = start[0];
-	this->me->start[1] = start[1];
-	this->me->start[2] = start[2];
-
-	this->me->end[0] = end[0];
-	this->me->end[1] = end[1];
-	this->me->end[2] = end[2];
-
-
-	//skeleton com 4 endpoints mas cada chain tem 2 de comprimento
-
-	this->children.at(0)->me->end[0] = b->children.at(0)->me->end[0];
-	this->children.at(0)->me->end[1] = b->children.at(0)->me->end[1];
-	this->children.at(0)->me->end[2] = b->children.at(0)->me->end[2];
-
-	this->children.at(0)->me->start[0] = b->children.at(0)->me->start[0];
-	this->children.at(0)->me->start[1] = b->children.at(0)->me->start[1];
-	this->children.at(0)->me->start[2] = b->children.at(0)->me->start[2];
-
-
-
-	this->children.at(0)->children.at(0)->me->end[0] = b->children.at(0)->children.at(0)->me->end[0];
-	this->children.at(0)->children.at(0)->me->end[1] = b->children.at(0)->children.at(0)->me->end[1];
-	this->children.at(0)->children.at(0)->me->end[2] = b->children.at(0)->children.at(0)->me->end[2];
-
-	this->children.at(0)->children.at(0)->children.at(0)->me->end[0] = b->children.at(0)->children.at(0)->children.at(0)->me->end[0];
-	this->children.at(0)->children.at(0)->children.at(0)->me->end[1] = b->children.at(0)->children.at(0)->children.at(0)->me->end[1];
-	this->children.at(0)->children.at(0)->children.at(0)->me->end[2] = b->children.at(0)->children.at(0)->children.at(0)->me->end[2];
-
-	this->children.at(0)->children.at(1)->me->end[0] = b->children.at(0)->children.at(1)->me->end[0];
-	this->children.at(0)->children.at(1)->me->end[1] = b->children.at(0)->children.at(1)->me->end[1];
-	this->children.at(0)->children.at(1)->me->end[2] = b->children.at(0)->children.at(1)->me->end[2];
-
-	this->children.at(0)->children.at(1)->children.at(0)->me->end[0] = b->children.at(0)->children.at(1)->children.at(0)->me->end[0];
-	this->children.at(0)->children.at(1)->children.at(0)->me->end[1] = b->children.at(0)->children.at(1)->children.at(0)->me->end[1];
-	this->children.at(0)->children.at(1)->children.at(0)->me->end[2] = b->children.at(0)->children.at(1)->children.at(0)->me->end[2];
-
-
-	this->children.at(0)->children.at(0)->me->start[0] = b->children.at(0)->children.at(0)->me->start[0];
-	this->children.at(0)->children.at(0)->me->start[1] = b->children.at(0)->children.at(0)->me->start[1];
-	this->children.at(0)->children.at(0)->me->start[2] = b->children.at(0)->children.at(0)->me->start[2];
-
-	this->children.at(0)->children.at(0)->children.at(0)->me->start[0] = b->children.at(0)->children.at(0)->children.at(0)->me->start[0];
-	this->children.at(0)->children.at(0)->children.at(0)->me->start[1] = b->children.at(0)->children.at(0)->children.at(0)->me->start[1];
-	this->children.at(0)->children.at(0)->children.at(0)->me->start[2] = b->children.at(0)->children.at(0)->children.at(0)->me->start[2];
-
-	this->children.at(0)->children.at(1)->me->start[0] = b->children.at(0)->children.at(1)->me->start[0];
-	this->children.at(0)->children.at(1)->me->start[1] = b->children.at(0)->children.at(1)->me->start[1];
-	this->children.at(0)->children.at(1)->me->start[2] = b->children.at(0)->children.at(1)->me->start[2];
-
-	this->children.at(0)->children.at(1)->children.at(0)->me->start[0] = b->children.at(0)->children.at(1)->children.at(0)->me->start[0];
-	this->children.at(0)->children.at(1)->children.at(0)->me->start[1] = b->children.at(0)->children.at(1)->children.at(0)->me->start[1];
-	this->children.at(0)->children.at(1)->children.at(0)->me->start[2] = b->children.at(0)->children.at(1)->children.at(0)->me->start[2];
-
-
-
-
-
-	this->children.at(0)->children.at(0)->children.at(0)->children.at(0)->me->end[0] = b->children.at(0)->children.at(0)->children.at(0)->children.at(0)->me->end[0];
-	this->children.at(0)->children.at(0)->children.at(0)->children.at(0)->me->end[1] = b->children.at(0)->children.at(0)->children.at(0)->children.at(0)->me->end[1];
-	this->children.at(0)->children.at(0)->children.at(0)->children.at(0)->me->end[2] = b->children.at(0)->children.at(0)->children.at(0)->children.at(0)->me->end[2];
-
-	this->children.at(0)->children.at(0)->children.at(0)->children.at(1)->me->end[0] = b->children.at(0)->children.at(0)->children.at(0)->children.at(1)->me->end[0];
-	this->children.at(0)->children.at(0)->children.at(0)->children.at(1)->me->end[1] = b->children.at(0)->children.at(0)->children.at(0)->children.at(1)->me->end[1];
-	this->children.at(0)->children.at(0)->children.at(0)->children.at(1)->me->end[2] = b->children.at(0)->children.at(0)->children.at(0)->children.at(1)->me->end[2];
-
-	this->children.at(0)->children.at(1)->children.at(0)->children.at(0)->me->end[0] = b->children.at(0)->children.at(1)->children.at(0)->children.at(0)->me->end[0];
-	this->children.at(0)->children.at(1)->children.at(0)->children.at(0)->me->end[1] = b->children.at(0)->children.at(1)->children.at(0)->children.at(0)->me->end[1];
-	this->children.at(0)->children.at(1)->children.at(0)->children.at(0)->me->end[2] = b->children.at(0)->children.at(1)->children.at(0)->children.at(0)->me->end[2];
-
-	this->children.at(0)->children.at(1)->children.at(0)->children.at(1)->me->end[0] = b->children.at(0)->children.at(1)->children.at(0)->children.at(1)->me->end[0];
-	this->children.at(0)->children.at(1)->children.at(0)->children.at(1)->me->end[1] = b->children.at(0)->children.at(1)->children.at(0)->children.at(1)->me->end[1];
-	this->children.at(0)->children.at(1)->children.at(0)->children.at(1)->me->end[2] = b->children.at(0)->children.at(1)->children.at(0)->children.at(1)->me->end[2];
-
-	this->children.at(0)->children.at(0)->children.at(0)->children.at(0)->children.at(0)->me->end[0] = b->children.at(0)->children.at(0)->children.at(0)->children.at(0)->children.at(0)->me->end[0];
-	this->children.at(0)->children.at(0)->children.at(0)->children.at(0)->children.at(0)->me->end[1] = b->children.at(0)->children.at(0)->children.at(0)->children.at(0)->children.at(0)->me->end[1];
-	this->children.at(0)->children.at(0)->children.at(0)->children.at(0)->children.at(0)->me->end[2] = b->children.at(0)->children.at(0)->children.at(0)->children.at(0)->children.at(0)->me->end[2];
-
-	this->children.at(0)->children.at(0)->children.at(0)->children.at(1)->children.at(0)->me->end[0] = b->children.at(0)->children.at(0)->children.at(0)->children.at(1)->children.at(0)->me->end[0];
-	this->children.at(0)->children.at(0)->children.at(0)->children.at(1)->children.at(0)->me->end[1] = b->children.at(0)->children.at(0)->children.at(0)->children.at(1)->children.at(0)->me->end[1];
-	this->children.at(0)->children.at(0)->children.at(0)->children.at(1)->children.at(0)->me->end[2] = b->children.at(0)->children.at(0)->children.at(0)->children.at(1)->children.at(0)->me->end[2];
-
-	this->children.at(0)->children.at(1)->children.at(0)->children.at(0)->children.at(0)->me->end[0] = b->children.at(0)->children.at(1)->children.at(0)->children.at(0)->children.at(0)->me->end[0];
-	this->children.at(0)->children.at(1)->children.at(0)->children.at(0)->children.at(0)->me->end[1] = b->children.at(0)->children.at(1)->children.at(0)->children.at(0)->children.at(0)->me->end[1];
-	this->children.at(0)->children.at(1)->children.at(0)->children.at(0)->children.at(0)->me->end[2] = b->children.at(0)->children.at(1)->children.at(0)->children.at(0)->children.at(0)->me->end[2];
-
-	this->children.at(0)->children.at(1)->children.at(0)->children.at(1)->children.at(0)->me->end[0] = b->children.at(0)->children.at(1)->children.at(0)->children.at(1)->children.at(0)->me->end[0];
-	this->children.at(0)->children.at(1)->children.at(0)->children.at(1)->children.at(0)->me->end[1] = b->children.at(0)->children.at(1)->children.at(0)->children.at(1)->children.at(0)->me->end[1];
-	this->children.at(0)->children.at(1)->children.at(0)->children.at(1)->children.at(0)->me->end[2] = b->children.at(0)->children.at(1)->children.at(0)->children.at(1)->children.at(0)->me->end[2];
-
-
-
-
-	this->children.at(0)->children.at(0)->children.at(0)->children.at(0)->me->start[0] = b->children.at(0)->children.at(0)->children.at(0)->children.at(0)->me->start[0];
-	this->children.at(0)->children.at(0)->children.at(0)->children.at(0)->me->start[1] = b->children.at(0)->children.at(0)->children.at(0)->children.at(0)->me->start[1];
-	this->children.at(0)->children.at(0)->children.at(0)->children.at(0)->me->start[2] = b->children.at(0)->children.at(0)->children.at(0)->children.at(0)->me->start[2];
-
-	this->children.at(0)->children.at(0)->children.at(0)->children.at(1)->me->start[0] = b->children.at(0)->children.at(0)->children.at(0)->children.at(1)->me->start[0];
-	this->children.at(0)->children.at(0)->children.at(0)->children.at(1)->me->start[1] = b->children.at(0)->children.at(0)->children.at(0)->children.at(1)->me->start[1];
-	this->children.at(0)->children.at(0)->children.at(0)->children.at(1)->me->start[2] = b->children.at(0)->children.at(0)->children.at(0)->children.at(1)->me->start[2];
-
-	this->children.at(0)->children.at(1)->children.at(0)->children.at(0)->me->start[0] = b->children.at(0)->children.at(1)->children.at(0)->children.at(0)->me->start[0];
-	this->children.at(0)->children.at(1)->children.at(0)->children.at(0)->me->start[1] = b->children.at(0)->children.at(1)->children.at(0)->children.at(0)->me->start[1];
-	this->children.at(0)->children.at(1)->children.at(0)->children.at(0)->me->start[2] = b->children.at(0)->children.at(1)->children.at(0)->children.at(0)->me->start[2];
-
-	this->children.at(0)->children.at(1)->children.at(0)->children.at(1)->me->start[0] = b->children.at(0)->children.at(1)->children.at(0)->children.at(1)->me->start[0];
-	this->children.at(0)->children.at(1)->children.at(0)->children.at(1)->me->start[1] = b->children.at(0)->children.at(1)->children.at(0)->children.at(1)->me->start[1];
-	this->children.at(0)->children.at(1)->children.at(0)->children.at(1)->me->start[2] = b->children.at(0)->children.at(1)->children.at(0)->children.at(1)->me->start[2];
-
-	this->children.at(0)->children.at(0)->children.at(0)->children.at(0)->children.at(0)->me->start[0] = b->children.at(0)->children.at(0)->children.at(0)->children.at(0)->children.at(0)->me->start[0];
-	this->children.at(0)->children.at(0)->children.at(0)->children.at(0)->children.at(0)->me->start[1] = b->children.at(0)->children.at(0)->children.at(0)->children.at(0)->children.at(0)->me->start[1];
-	this->children.at(0)->children.at(0)->children.at(0)->children.at(0)->children.at(0)->me->start[2] = b->children.at(0)->children.at(0)->children.at(0)->children.at(0)->children.at(0)->me->start[2];
-
-	this->children.at(0)->children.at(0)->children.at(0)->children.at(1)->children.at(0)->me->start[0] = b->children.at(0)->children.at(0)->children.at(0)->children.at(1)->children.at(0)->me->start[0];
-	this->children.at(0)->children.at(0)->children.at(0)->children.at(1)->children.at(0)->me->start[1] = b->children.at(0)->children.at(0)->children.at(0)->children.at(1)->children.at(0)->me->start[1];
-	this->children.at(0)->children.at(0)->children.at(0)->children.at(1)->children.at(0)->me->start[2] = b->children.at(0)->children.at(0)->children.at(0)->children.at(1)->children.at(0)->me->start[2];
-
-	this->children.at(0)->children.at(1)->children.at(0)->children.at(0)->children.at(0)->me->start[0] = b->children.at(0)->children.at(1)->children.at(0)->children.at(0)->children.at(0)->me->start[0];
-	this->children.at(0)->children.at(1)->children.at(0)->children.at(0)->children.at(0)->me->start[1] = b->children.at(0)->children.at(1)->children.at(0)->children.at(0)->children.at(0)->me->start[1];
-	this->children.at(0)->children.at(1)->children.at(0)->children.at(0)->children.at(0)->me->start[2] = b->children.at(0)->children.at(1)->children.at(0)->children.at(0)->children.at(0)->me->start[2];
-
-	this->children.at(0)->children.at(1)->children.at(0)->children.at(1)->children.at(0)->me->start[0] = b->children.at(0)->children.at(1)->children.at(0)->children.at(1)->children.at(0)->me->start[0];
-	this->children.at(0)->children.at(1)->children.at(0)->children.at(1)->children.at(0)->me->start[1] = b->children.at(0)->children.at(1)->children.at(0)->children.at(1)->children.at(0)->me->start[1];
-	this->children.at(0)->children.at(1)->children.at(0)->children.at(1)->children.at(0)->me->start[2] = b->children.at(0)->children.at(1)->children.at(0)->children.at(1)->children.at(0)->me->start[2];
-
-	//trata dos targets
-
-	float x, y, z;
-	x = b->children.at(0)->children.at(0)->children.at(0)->children.at(0)->children.at(0)->target[0];
-	y = b->children.at(0)->children.at(0)->children.at(0)->children.at(0)->children.at(0)->target[1];
-	z = b->children.at(0)->children.at(0)->children.at(0)->children.at(0)->children.at(0)->target[2];
-	this->children.at(0)->children.at(0)->children.at(0)->children.at(0)->children.at(0)->setTarget(x, y, z);
-
-	x = b->children.at(0)->children.at(0)->children.at(0)->children.at(1)->children.at(0)->target[0];
-	y = b->children.at(0)->children.at(0)->children.at(0)->children.at(1)->children.at(0)->target[1];
-	z = b->children.at(0)->children.at(0)->children.at(0)->children.at(1)->children.at(0)->target[2];
-
-	this->children.at(0)->children.at(0)->children.at(0)->children.at(1)->children.at(0)->setTarget(x, y, z);
-
-	x = b->children.at(0)->children.at(1)->children.at(0)->children.at(0)->children.at(0)->target[0];
-	y = b->children.at(0)->children.at(1)->children.at(0)->children.at(0)->children.at(0)->target[1];
-	z = b->children.at(0)->children.at(1)->children.at(0)->children.at(0)->children.at(0)->target[2];
-
-	this->children.at(0)->children.at(1)->children.at(0)->children.at(0)->children.at(0)->setTarget(x, y, z);
-
-	x = b->children.at(0)->children.at(1)->children.at(0)->children.at(1)->children.at(0)->target[0];
-	y = b->children.at(0)->children.at(1)->children.at(0)->children.at(1)->children.at(0)->target[1];
-	z = b->children.at(0)->children.at(1)->children.at(0)->children.at(1)->children.at(0)->target[2];
-
-	this->children.at(0)->children.at(1)->children.at(0)->children.at(1)->children.at(0)->setTarget(x, y, z);
-
-}
-
 
 
 void skeleton::getSubRoots(std::vector<skeleton*>* subRoots)
@@ -1218,80 +1000,13 @@ void skeleton::getAllSkeleton(std::vector<skeleton*>* ret)
 
 }
 
-skeleton::skeleton(float in_start[3], float in_end[3])
+skeleton::skeleton(float in_start[3], float in_end[3],float angle_in, float angle_vector_in[3], float angle_out, float angle_vector_out[3])
 {
-	Bone* b = new Bone(in_start, in_end);
+	Bone* b = new Bone(in_start, in_end,angle_in, angle_vector_in, angle_out, angle_vector_out);
 	this->me = b;
 	this->parent = NULL;
 	std::vector<skeleton*> children;
 	this->children = children;
-
-}
-
-skeleton::skeleton(const skeleton& s)
-{
-	printf("A começar \n");
-
-	if (this->children.size() > 0) {
-		float start[3];
-		float end[3];
-
-		start[0] = s.me->start[0];
-		start[1] = s.me->start[1];
-		start[2] = s.me->start[2];
-
-		end[0] = s.me->end[0];
-		end[1] = s.me->end[1];
-		end[2] = s.me->end[2];
-
-		Bone* b = new Bone(start, end);
-
-		this->me = b;
-
-		if (s.target != NULL) {
-			this->target[0] = s.target[0];
-			this->target[1] = s.target[1];
-			this->target[2] = s.target[2];
-		}
-		if (s.parent != NULL)
-			this->parent = s.parent;
-
-
-
-		for each (skeleton * s_temp in s.children)
-		{
-			printf("1\n");
-			skeleton* x = s_temp;
-			this->addChildren(x);
-			printf("2\n");
-		}
-
-	}
-	else {
-		printf("10\n");
-		float start[3];
-		float end[3];
-
-		start[0] = s.me->start[0];
-		start[1] = s.me->start[1];
-		start[2] = s.me->start[2];
-
-		end[0] = s.me->end[0];
-		end[1] = s.me->end[1];
-		end[2] = s.me->end[2];
-
-		Bone* b = new Bone(start, end);
-
-		printf("4\n");
-		if (s.target != NULL) {
-			this->target[0] = s.target[0];
-			this->target[1] = s.target[1];
-			this->target[2] = s.target[2];
-		}
-		if (s.parent != NULL)
-			this->parent = s.parent;
-
-	}
 
 }
 

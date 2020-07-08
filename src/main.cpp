@@ -153,6 +153,7 @@ void renderScene(void) {
 		0.0, 0.0, 0.0,
 		0.0f, 1.0f, 0.0f);
 
+	
 	glPushMatrix();
 	if (controlling == 0)
 		glColor3f(1.0f, 0.0f, 0.0f);
@@ -176,7 +177,7 @@ void renderScene(void) {
 	glutWireSphere(0.5, 10, 10);
 	glColor3f(0.0f, 0.0f, 1.0f);
 	glPopMatrix();
-
+	
 	glPushMatrix();
 	if (controlling == 3)
 		glColor3f(1.0f, 0.0f, 0.0f);
@@ -264,6 +265,7 @@ int main(int argc, char** argv) {
 	//skeleton points
 	float start[3] = { 0,0,0 };
 
+	
 	float up1[3] = { 0,2,0 };
 	float up2[3] = { 0,3,0 };
 	float up3[3] = { 0,4,0 };
@@ -275,6 +277,7 @@ int main(int argc, char** argv) {
 	float up9[3] = { 2,1.5,0 };
 	float up10[3] = { 2,-1,0 };
 	float up11[3] = { 0,4.5,1 };
+	
 
 	float down1[3] = { 0,-2,0 };
 	float down2[3] = { -1,-2,0 };
@@ -284,33 +287,40 @@ int main(int argc, char** argv) {
 	float down6[3] = { 1,-4,0 };
 	float down7[3] = { 1,-6,0 };
 
-	//Parte superior
-	up = new skeleton(start, up1);
-	//Tronco
-	up->addChildren(up2);
-	//Cabeça
-	up->children.at(0)->addChildren(up3);
-	up->children.at(0)->children.at(0)->addChildren(up4);
-	up->children.at(0)->children.at(0)->children.at(0)->addChildren(up11);
-	//braço 1
-	up->children.at(0)->addChildren(up5);
-	up->children.at(0)->children.at(1)->addChildren(up6);
-	up->children.at(0)->children.at(1)->children.at(0)->addChildren(up7);
-	//braço 2
-	up->children.at(0)->addChildren(up8);
-	up->children.at(0)->children.at(2)->addChildren(up9);
-	up->children.at(0)->children.at(2)->children.at(0)->addChildren(up10);
+	float angle_vector_null[3] = { 0,0,0 };
 
+	
+	//Parte superior
+	up = new skeleton(start, up1,0.1, angle_vector_null, 0.1, angle_vector_null);
+	//Tronco
+	up->addChildren(up2, 1.58, angle_vector_null, 1.58, angle_vector_null);
+	//Cabeça
+	up->children.at(0)->addChildren(up3, 1.58, angle_vector_null, 1.58, angle_vector_null);
+	up->children.at(0)->children.at(0)->addChildren(up4, 1.58, angle_vector_null, 1.58, angle_vector_null);
+	up->children.at(0)->children.at(0)->children.at(0)->addChildren(up11, 1.58, angle_vector_null, 1.58, angle_vector_null);
+	//braço 1
+	up->children.at(0)->addChildren(up5, 1.58, angle_vector_null, 1.58, angle_vector_null);
+	float angle_bracos[3] = { 0,0,-1 };
+	up->children.at(0)->children.at(1)->addChildren(up6, 1.58, angle_bracos, 1.58, angle_bracos);
+	up->children.at(0)->children.at(1)->children.at(0)->addChildren(up7, 1.58, angle_vector_null, 1.58, angle_vector_null);
+	//braço 2
+	up->children.at(0)->addChildren(up8, 1.58, angle_vector_null, 1.58, angle_vector_null);
+	up->children.at(0)->children.at(2)->addChildren(up9, 1.58, angle_bracos, 1.58, angle_bracos);
+	up->children.at(0)->children.at(2)->children.at(0)->addChildren(up10, 1.58, angle_vector_null, 1.58, angle_vector_null);
+	
 	//Parte inferior
-	down = new skeleton(start, down1);
+	float angle_pernas_down[3] = { 0,-1,0 };
+	down = new skeleton(start, down1, 1.58, angle_vector_null, 1.58, angle_vector_null);
 	//Perna 1
-	down->addChildren(down2);
-	down->children.at(0)->addChildren(down3);
-	down->children.at(0)->children.at(0)->addChildren(down4);
+	float angle_pernas_left[3] = { 1,0,0 };
+	float angle_pernas_right[3] = { -1,0,0 };
+	down->addChildren(down2, 1.58, angle_vector_null, 1.58, angle_vector_null);
+	down->children.at(0)->addChildren(down3, 1.58, angle_vector_null, 1.58, angle_vector_null);
+	down->children.at(0)->children.at(0)->addChildren(down4, 1.58, angle_vector_null, 1.58, angle_vector_null);
 	//Perna 2
-	down->addChildren(down5);
-	down->children.at(1)->addChildren(down6);
-	down->children.at(1)->children.at(0)->addChildren(down7);
+	down->addChildren(down5, 1.58, angle_vector_null, 1.58, angle_vector_null);
+	down->children.at(1)->addChildren(down6, 1.58, angle_vector_null, 1.58, angle_vector_null);
+	down->children.at(1)->children.at(0)->addChildren(down7, 1.58, angle_vector_null, 1.58, angle_vector_null);
 
 	//Targets
 	up->children.at(0)->children.at(0)->children.at(0)->children.at(0)->setTarget(0, 4.5, 1);//Cabeça

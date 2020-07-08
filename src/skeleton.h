@@ -19,7 +19,7 @@ public:
 
 	void changerestrictions();
 
-	void addChildren(float in_end[3]);
+	void addChildren(float in_end[3],float angle_in,float angle_vector_in[3], float angle_out, float angle_vector_out[3]);
 	void addChildren(skeleton* child);
 	void setParent(skeleton* s);
 	void draw();
@@ -29,7 +29,7 @@ public:
 	void backward();
 	void forward();
 	void update(float target[3], float* return_effector);
-	void tempSkeleton(int path, skeleton* ret);
+	
 
 	void applyRestrictions(float firstVecX, float firstVecY, float firstVecZ);
 	bool multiUpdateIn(float* originalX, float* originalY, float* originalZ);
@@ -37,13 +37,7 @@ public:
 
 	void multiUpdate(skeleton* targets[4]);
 
-	//void multiUpdate(skeleton* targets[4], skeleton* placeholder);
 
-	//void multiUpdate(skeleton* targets[4]);
-
-	void save_state(skeleton* b);
-
-	void reverte_state(skeleton* b);
 
 	//void multiUpdate();
 	void getSubRoots(std::vector<skeleton*>* subRoots);
@@ -52,8 +46,8 @@ public:
 	float* getEndEffector();
 	void getAllSkeleton(std::vector<skeleton*>* ret);
 
-	skeleton(float in_start[3], float in_end[3]);
-	skeleton(const skeleton& s);
+	skeleton(float in_start[3], float in_end[3],float angle_in, float angle_vector_in[3], float angle_out, float angle_vector_out[3]);
+	
 	~skeleton();
 };
 

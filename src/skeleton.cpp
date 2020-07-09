@@ -1,8 +1,8 @@
 #include "skeleton.h"
 #include "Bone.h"
-#include<GL/glut.h>
-#include"glm/glm/glm.hpp"
-#include"glm/glm/gtx/rotate_vector.hpp"
+#include <GL/glut.h>
+#include <../glm/glm.hpp>
+#include <../glm/gtx/rotate_vector.hpp>
 
 bool inwards = true;
 bool outwards = true;

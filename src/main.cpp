@@ -311,10 +311,15 @@ int main(int argc, char** argv) {
 	
 	//Parte inferior
 	float angle_pernas_down[3] = { 0,-1,0 };
+	float angle_pernas_up[3] = { 0,1,0 };
+	float angle_pernas_left[3] = { -1,0,0 };
+	float angle_pernas_right[3] = { 1,0,0 };
+	float angle_pernas_front[3] = { 0,0,1 };
+	float angle_pernas_back[3] = { 0,0,-1 };
+
 	down = new skeleton(start, down1, 1.58, angle_vector_null, 1.58, angle_vector_null);
 	//Perna 1
-	float angle_pernas_left[3] = { 1,0,0 };
-	float angle_pernas_right[3] = { -1,0,0 };
+
 	down->addChildren(down2, 1.58, angle_vector_null, 1.58, angle_vector_null);
 	down->children.at(0)->addChildren(down3, 1.58, angle_vector_null, 1.58, angle_vector_null);
 	down->children.at(0)->children.at(0)->addChildren(down4, 1.58, angle_vector_null, 1.58, angle_vector_null);

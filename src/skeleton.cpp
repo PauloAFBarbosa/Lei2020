@@ -95,7 +95,7 @@ void skeleton::getTarget(float* target[3]) {
 	}
 }
 
-//nesta funcao basta seguir um dos ramos, porque depois ele vai partir do end effort e vai recuar até ao pai e vai correr todos os filhos
+//nesta funcao basta seguir um dos ramos, porque depois ele vai partir do end effort e vai recuar atÃ© ao pai e vai correr todos os filhos
 void skeleton::getEndPoints(std::vector<skeleton*>* endpoints) {
 	if (this->children.empty() != true) {
 		this->children.at(0)->getEndPoints(endpoints);
@@ -250,17 +250,20 @@ void rotate(float original[3], float target_vector[3],float angle ,float res[3])
 	res[1] = rotated.y;
 	res[2] = rotated.z;
 
+	
 }
+
+
 
 bool skeleton::multiUpdateIn(float* originalX, float* originalY, float* originalZ) {
 	//get all sub-roots
 	std::vector<skeleton*> subRoots;
 	this->getSubRoots(&subRoots);
 
-	//Vai ser usado para guardar a posição do centroid
+	//Vai ser usado para guardar a posiÃ§Ã£o do centroid
 	float finalx, finaly, finalz;
 
-	//vai guardar a posição original do skeleton
+	//vai guardar a posiÃ§Ã£o original do skeleton
 	float b[3];
 	*(originalX) = this->me->start[0];
 	*(originalY) = this->me->start[1];
@@ -270,7 +273,7 @@ bool skeleton::multiUpdateIn(float* originalX, float* originalY, float* original
 
 		std::vector<float> positions;
 		for each (skeleton * children in sub->children) {
-			//Para cada filho vai buscar a sua chain até chegar ao fim ou até encontrar outra sub root
+			//Para cada filho vai buscar a sua chain atÃ© chegar ao fim ou atÃ© encontrar outra sub root
 			std::vector<skeleton*> chain;
 			children->getAllSkeleton(&chain);
 			//Agora para cada filho vai aplicar o algoritmo descendente
@@ -288,8 +291,8 @@ bool skeleton::multiUpdateIn(float* originalX, float* originalY, float* original
 			chain.at(i)->me->end[1] = (*target)[1];
 			chain.at(i)->me->end[2] = (*target)[2];
 
-			//------restrições
-			//vai calcular o vetor para as restrições seguintes
+			//------restriÃ§Ãµes
+			//vai calcular o vetor para as restriÃ§Ãµes seguintes
 			float vector[3];
 			if (chain.at(i)->me->angle_vector_in[0] == 0 && chain.at(i)->me->angle_vector_in[1] == 0 && chain.at(i)->me->angle_vector_in[2] == 0) {
 				vector[0] = chain.at(i)->me->start[0] - chain.at(i)->me->end[0];
@@ -305,7 +308,7 @@ bool skeleton::multiUpdateIn(float* originalX, float* originalY, float* original
 
 			normalize_skel(vector);
 
-			//------restrições
+			//------restriÃ§Ãµes
 
 			for (i; i >= 0; i--) {
 
@@ -331,10 +334,10 @@ bool skeleton::multiUpdateIn(float* originalX, float* originalY, float* original
 
 
 
-				//-------restriçoes
-				//Vai fazer a restrição para todos menos o primeiro
+				//-------restriÃ§oes
+				//Vai fazer a restriÃ§Ã£o para todos menos o primeiro
 				//vai verificar se o chain.at(i).start esta no sitio certo
-				//vector[3] é o vetor que esta no centro do cone
+				//vector[3] Ã© o vetor que esta no centro do cone
 				
 				
 				if (i < chain.size() - 1) {
@@ -366,15 +369,14 @@ bool skeleton::multiUpdateIn(float* originalX, float* originalY, float* original
 					//printf("Acos %f \n", acos);
 					//0,78 sao 45 graus, se tiver maior que 45 graus esta fora e vai ter de fazer alguma coisa
 					if (acos > angle) {
-
-						printf("entrou no if no multiIN ponto : %f %f %f angulo %f max %f \n", point[0], point[1], point[2],acos,angle);
+						
 							
 						float resultado[3];
 							
 						rotate(vector, vector_teste, angle ,resultado);
 
 						normalize_skel(resultado);
-						printf("Vector %f %f %f  vectorTeste %f %f %f resultado %f %f %f\n", vector[0], vector[1], vector[2], vector_teste[0], vector_teste[1], vector_teste[2], resultado[0], resultado[1], resultado[2]);
+						
 						double dist;
 						dist = chain.at(i)->me->size;
 
@@ -392,7 +394,7 @@ bool skeleton::multiUpdateIn(float* originalX, float* originalY, float* original
 						}
 					}
 
-					//preparar o vetor para a prox iteração
+					//preparar o vetor para a prox iteraÃ§Ã£o
 					//nao precisa fazer nada no ultimo
 						
 
@@ -403,30 +405,24 @@ bool skeleton::multiUpdateIn(float* originalX, float* originalY, float* original
 						vector[2] = chain.at(i)->me->start[2] - chain.at(i)->me->end[2];
 					}
 					else {
-						vector[0] = chain.at(i-1)->me->angle_vector_in[0];
-						vector[1] = chain.at(i-1)->me->angle_vector_in[1];
-						vector[2] = chain.at(i-1)->me->angle_vector_in[2];
+						// este if esta aqui para ele nao tentar preparar o vector na ultima iteraÃ§Ã£o --- se nao da erro
+						if (i > 0) {
+							vector[0] = chain.at(i - 1)->me->angle_vector_in[0];
+							vector[1] = chain.at(i - 1)->me->angle_vector_in[1];
+							vector[2] = chain.at(i - 1)->me->angle_vector_in[2];
+						}
 					}
-
-					//vector[0] = chain.at(i - 1)->me->start[0] - chain.at(i - 1)->me->end[0];
-					//vector[1] = chain.at(i - 1)->me->start[1] - chain.at(i - 1)->me->end[1];
-					//vector[2] = chain.at(i - 1)->me->start[2] - chain.at(i - 1)->me->end[2];
-
 					normalize_skel(vector);
 						
-					//so posso adicionar aqui à lista porque tenho de esperar que as correções sejam feitas pelas restrições
+					//so posso adicionar aqui Ã  lista porque tenho de esperar que as correÃ§Ãµes sejam feitas pelas restriÃ§Ãµes
 					if (i == 0) {
 						positions.push_back(chain.at(i)->me->start[0]);
 						positions.push_back(chain.at(i)->me->start[1]);
 						positions.push_back(chain.at(i)->me->start[2]);
 					}
 				}
+				//------restriÃ§Ãµes
 				
-				
-
-
-
-				//------restrições
 			}
 		}
 		//Quando acabar todos os filhos vai calcular o centroid
@@ -449,7 +445,7 @@ bool skeleton::multiUpdateIn(float* originalX, float* originalY, float* original
 		//printf("Final %f %f %f\n", finalx,finaly,finalz);
 
 
-		//Agora tenho de escolher o ponto que fica na linha entre o start da bifurcação e o centroid. e que respeite o size
+		//Agora tenho de escolher o ponto que fica na linha entre o start da bifurcaÃ§Ã£o e o centroid. e que respeite o size
 		float vector[3];
 		vector[0] = finalx - sub->me->start[0];
 		vector[1] = finaly - sub->me->start[1];
@@ -460,7 +456,7 @@ bool skeleton::multiUpdateIn(float* originalX, float* originalY, float* original
 		vector[1] = vector[1] / magnitude;
 		vector[2] = vector[2] / magnitude;
 
-		//Aqui posso por o ponto finalx,y,z ou posso por o ponto real, nao faz diferença
+		//Aqui posso por o ponto finalx,y,z ou posso por o ponto real, nao faz diferenÃ§a
 		sub->me->end[0] = finalx;
 		sub->me->end[1] = finaly;
 		sub->me->end[2] = finalz;
@@ -477,7 +473,7 @@ bool skeleton::multiUpdateIn(float* originalX, float* originalY, float* original
 			children->me->start[2] = sub->me->start[2] + vector[2] * sub->me->size;
 		}
 	}
-	//Ja temos todos as sub roots processadas, falta agora correr o algoritmo normal da primeira sub base até á root principal
+	//Ja temos todos as sub roots processadas, falta agora correr o algoritmo normal da primeira sub base atÃ© Ã¡ root principal
 	//Vai buscar a chain da raiz principal
 	std::vector<skeleton*> chain;
 	this->getAllSkeleton(&chain);
@@ -495,8 +491,8 @@ bool skeleton::multiUpdateIn(float* originalX, float* originalY, float* original
 	chain.at(i)->me->end[1] = (*target)[1];
 	chain.at(i)->me->end[2] = (*target)[2];
 
-	//------restrições
-			//vai calcular o vetor para as restrições seguintes
+	//------restriÃ§Ãµes
+			//vai calcular o vetor para as restriÃ§Ãµes seguintes
 	float vector[3];
 
 	if (chain.at(i)->me->angle_vector_in[0] == 0 && chain.at(i)->me->angle_vector_in[1] == 0 && chain.at(i)->me->angle_vector_in[2] == 0) {
@@ -516,7 +512,7 @@ bool skeleton::multiUpdateIn(float* originalX, float* originalY, float* original
 
 	normalize_skel(vector);
 
-	//------restrições
+	//------restriÃ§Ãµes
 
 	for (i; i >= 0; i--) {
 		float r = distance(chain.at(i)->me->end, chain.at(i)->me->start);
@@ -569,7 +565,7 @@ bool skeleton::multiUpdateIn(float* originalX, float* originalY, float* original
 			//printf("Acos %f \n", acos);
 			//0,78 sao 45 graus, se tiver maior que 45 graus esta fora e vai ter de fazer alguma coisa
 			if (acos > angle) {
-
+				
 				float resultado[3];
 
 				rotate(vector, vector_teste, angle, resultado);
@@ -593,7 +589,7 @@ bool skeleton::multiUpdateIn(float* originalX, float* originalY, float* original
 				}
 
 			}
-			//preparar o vetor para a prox iteração
+			//preparar o vetor para a prox iteraÃ§Ã£o
 			//nao precisa fazer nada no ultimo
 			if (i != 0) {
 
@@ -603,9 +599,11 @@ bool skeleton::multiUpdateIn(float* originalX, float* originalY, float* original
 					vector[2] = chain.at(i - 1)->me->start[2] - chain.at(i)->me->end[2];
 				}
 				else {
-					vector[0] = chain.at(i - 1)->me->angle_vector_in[0];
-					vector[1] = chain.at(i - 1)->me->angle_vector_in[1];
-					vector[2] = chain.at(i - 1)->me->angle_vector_in[2];
+					if (i > 0) {
+						vector[0] = chain.at(i - 1)->me->angle_vector_in[0];
+						vector[1] = chain.at(i - 1)->me->angle_vector_in[1];
+						vector[2] = chain.at(i - 1)->me->angle_vector_in[2];
+					}
 				}
 
 				normalize_skel(vector);
@@ -617,7 +615,7 @@ bool skeleton::multiUpdateIn(float* originalX, float* originalY, float* original
 
 void skeleton::multiUpdateOut(float originalX, float originalY, float originalZ) {
 	//Acabou agora a parte 1 do algoritmo
-		//vai começar na raiz principal e subir
+		//vai comeÃ§ar na raiz principal e subir
 
 
 	std::vector<skeleton*> chain_root;
@@ -627,8 +625,8 @@ void skeleton::multiUpdateOut(float originalX, float originalY, float originalZ)
 	chain_root.at(0)->me->start[1] = originalY;
 	chain_root.at(0)->me->start[2] = originalZ;
 
-	//------restrições
-			//vai calcular o vetor para as restrições seguintes
+	//------restriÃ§Ãµes
+			//vai calcular o vetor para as restriÃ§Ãµes seguintes
 	float vector[3];
 
 	if (chain_root.at(0)->me->angle_vector_out[0] == 0 && chain_root.at(0)->me->angle_vector_out[1] == 0 && chain_root.at(0)->me->angle_vector_out[2] == 0) {
@@ -637,6 +635,7 @@ void skeleton::multiUpdateOut(float originalX, float originalY, float originalZ)
 		vector[2] = chain_root.at(0)->me->end[2] - chain_root.at(0)->me->start[2];
 	}
 	else {
+		
 		vector[0] = chain_root.at(0)->me->angle_vector_out[0];
 		vector[1] = chain_root.at(0)->me->angle_vector_out[1];
 		vector[2] = chain_root.at(0)->me->angle_vector_out[2];
@@ -644,7 +643,7 @@ void skeleton::multiUpdateOut(float originalX, float originalY, float originalZ)
 
 	normalize_skel(vector);
 
-	//------restrições
+	//------restriÃ§Ãµes
 
 	for (int i = 0; i <= chain_root.size() - 1; i++) {
 		float r = distance(chain_root.at(i)->me->start, chain_root.at(i)->me->end);
@@ -694,6 +693,7 @@ void skeleton::multiUpdateOut(float originalX, float originalY, float originalZ)
 			//printf("Acos %f \n", acos);
 			//0,78 sao 45 graus, se tiver maior que 45 graus esta fora e vai ter de fazer alguma coisa
 			if (acos > angle) {
+				
 				float resultado[3];
 				rotate(vector, vector_teste, angle, resultado);
 
@@ -716,20 +716,21 @@ void skeleton::multiUpdateOut(float originalX, float originalY, float originalZ)
 					chain_root.at(i + 1)->me->start[2] = resultado[2];
 				}
 				
-
-				if (chain_root.at(i)->me->angle_vector_out[0] == 0 && chain_root.at(i)->me->angle_vector_out[1] == 0 && chain_root.at(i)->me->angle_vector_out[2] == 0) {
-					vector[0] = chain_root.at(i)->me->end[0] - chain_root.at(i)->me->start[0];
-					vector[1] = chain_root.at(i)->me->end[1] - chain_root.at(i)->me->start[1];
-					vector[2] = chain_root.at(i)->me->end[2] - chain_root.at(i)->me->start[2];
-				}
-				else {
-					vector[0] = chain_root.at(i)->me->angle_vector_out[0];
-					vector[1] = chain_root.at(i)->me->angle_vector_out[1];
-					vector[2] = chain_root.at(i)->me->angle_vector_out[2];
-				}
-
-				normalize_skel(vector);
 			}
+			if (chain_root.at(i)->me->angle_vector_out[0] == 0 && chain_root.at(i)->me->angle_vector_out[1] == 0 && chain_root.at(i)->me->angle_vector_out[2] == 0) {
+				vector[0] = chain_root.at(i)->me->end[0] - chain_root.at(i)->me->start[0];
+				vector[1] = chain_root.at(i)->me->end[1] - chain_root.at(i)->me->start[1];
+				vector[2] = chain_root.at(i)->me->end[2] - chain_root.at(i)->me->start[2];
+			}
+			else {
+				if (i < chain_root.size() - 1) {
+					
+					vector[0] = chain_root.at(i + 1)->me->angle_vector_out[0];
+					vector[1] = chain_root.at(i + 1)->me->angle_vector_out[1];
+					vector[2] = chain_root.at(i + 1)->me->angle_vector_out[2];
+				}
+			}
+			normalize_skel(vector);
 		}
 	}
 	//Agora vai ter de aplicar esta algoritmo para todas as sub chains que aparecem
@@ -752,8 +753,8 @@ void skeleton::multiUpdateOut(float originalX, float originalY, float originalZ)
 
 			//vou testar aplicar agora coisas aqui e ver se a parte de cima da arvore funciona bem 
 
-			//------restrições
-			//vai calcular o vetor para as restrições seguintes
+			//------restriÃ§Ãµes
+			//vai calcular o vetor para as restriÃ§Ãµes seguintes
 			float vector[3];
 
 			if (chain_2.at(0)->me->angle_vector_out[0] == 0 && chain_2.at(0)->me->angle_vector_out[1] == 0 && chain_2.at(0)->me->angle_vector_out[2] == 0) {
@@ -762,13 +763,14 @@ void skeleton::multiUpdateOut(float originalX, float originalY, float originalZ)
 				vector[2] = chain_2.at(0)->me->end[2] - chain_2.at(0)->me->start[2];
 			}
 			else {
+				
 				vector[0] = chain_2.at(0)->me->angle_vector_out[0];
 				vector[1] = chain_2.at(0)->me->angle_vector_out[1];
 				vector[2] = chain_2.at(0)->me->angle_vector_out[2];
 			}
 			normalize_skel(vector);
 
-			//------restrições
+			//------restriÃ§Ãµes
 
 			for (int i = 0; i <= chain_2.size() - 1; i++) {
 				float r = distance(chain_2.at(i)->me->start, chain_2.at(i)->me->end);
@@ -816,10 +818,10 @@ void skeleton::multiUpdateOut(float originalX, float originalY, float originalZ)
 
 					float acos = acosf(dot);
 
-					//printf("Acos %f \n", acos);
+					
 					//0,78 sao 45 graus, se tiver maior que 45 graus esta fora e vai ter de fazer alguma coisa
 					if (acos > angle) {
-						printf("entrou no if no multiOUT\n");
+						
 						float resultado[3];
 						rotate(vector, vector_teste, angle, resultado);
 
@@ -842,22 +844,23 @@ void skeleton::multiUpdateOut(float originalX, float originalY, float originalZ)
 						}
 						
 
-						if (chain_2.at(i)->me->angle_vector_out[0] == 0 && chain_2.at(i)->me->angle_vector_out[1] == 0 && chain_2.at(i)->me->angle_vector_out[2] == 0) {
-							vector[0] = chain_2.at(i)->me->end[0] - chain_2.at(i)->me->start[0];
-							vector[1] = chain_2.at(i)->me->end[1] - chain_2.at(i)->me->start[1];
-							vector[2] = chain_2.at(i)->me->end[2] - chain_2.at(i)->me->start[2];
-						}
-						else {
-							vector[0] = chain_2.at(i)->me->angle_vector_out[0];
-							vector[1] = chain_2.at(i)->me->angle_vector_out[1];
-							vector[2] = chain_2.at(i)->me->angle_vector_out[2];
-						}
+
+					}
+					if (chain_2.at(i)->me->angle_vector_out[0] == 0 && chain_2.at(i)->me->angle_vector_out[1] == 0 && chain_2.at(i)->me->angle_vector_out[2] == 0) {
+						vector[0] = chain_2.at(i)->me->end[0] - chain_2.at(i)->me->start[0];
+						vector[1] = chain_2.at(i)->me->end[1] - chain_2.at(i)->me->start[1];
+						vector[2] = chain_2.at(i)->me->end[2] - chain_2.at(i)->me->start[2];
 						
-
-						normalize_skel(vector);
-
-
-					}	
+					}
+					else {
+						if (i < chain_2.size() - 1) {
+							vector[0] = chain_2.at(i + 1)->me->angle_vector_out[0];
+							vector[1] = chain_2.at(i + 1)->me->angle_vector_out[1];
+							vector[2] = chain_2.at(i + 1)->me->angle_vector_out[2];
+						}
+					}
+					normalize_skel(vector);
+				
 				}
 			}
 			if (chain_2.at(chain_2.size() - 1)->children.size() > 1) {
@@ -867,15 +870,25 @@ void skeleton::multiUpdateOut(float originalX, float originalY, float originalZ)
 	}
 }
 
-void skeleton::multiUpdate(skeleton* targets[4]) {
-	float vec1[3] = {0,1,0};
-	float vec2[3] = { 1,0,0 };
-	float res[3];
+void skeleton::multiUpdate(skeleton* targets[4])
+{	
+	
+	/*
+	float start[3] = {0,0,0};
+	float end[3] = {0,1,0};
+	float in[3] = {0,1,0};
+	float out[3] = {0,1,0};
+	float res_in[3], res_out[3];
+	float angle = 2;
+	
+	Bone* b = new Bone(start, end, angle, in,2, out);
 
-	rotate(vec1, vec2, 0.7, res);
 
-	printf("O resultado deu %f %f %f \n", res[0], res[1], res[2]);
+	update_vec(b, res_in, res_out);
 
+	printf("Res in %f %f %f \n", res_in[0], res_in[1], res_in[2]);
+	*/
+	
 	float originalx, originaly, originalz;
 	for (int k = 0; k < 1; k++) {
 

@@ -21,21 +21,17 @@ void skeleton::changerestrictions() {
 }
 
 
-void skeleton::addChildren(float in_end[3],float angle_in,float angle_vector_in[3], float angle_out, float angle_vector_out[3])
-{
+void skeleton::addChildren(float in_end[3],float angle_in,float angle_vector_in[3], float angle_out, float angle_vector_out[3]) {
 	skeleton* s = new skeleton(this->me->end, in_end,angle_in,angle_vector_in, angle_out, angle_vector_out);
 
 	s->setParent(this);
 	this->children.push_back(s);
-
 }
 
-void skeleton::addChildren(skeleton* child)
-{
+void skeleton::addChildren(skeleton* child) {
 	child->setParent(this);
 
 	this->children.push_back(child);
-
 }
 
 void cross_skel(float* a, float* b, float* res) {
@@ -61,11 +57,9 @@ void multMatrixVector(float* m, float* v, float* res) {
 			res[j] += v[k] * m[j * 4 + k];
 		}
 	}
-
 }
 
-void skeleton::setParent(skeleton* s)
-{
+void skeleton::setParent(skeleton* s) {
 	this->parent = s;
 }
 
@@ -77,38 +71,32 @@ void normalize_skel(float* a) {
 	a[2] = a[2] / l;
 }
 
-void skeleton::draw()
-{
+void skeleton::draw() {
 
 	this->me->draw();
-	for each (skeleton * s in this->children)
-	{
+	for each (skeleton * s in this->children) {
 		s->draw();
 	}
 }
 
-void skeleton::setTarget(float x, float y, float z)
-{
+void skeleton::setTarget(float x, float y, float z) {
 	this->target[0] = x;
 	this->target[1] = y;
 	this->target[2] = z;
 }
 
-void skeleton::getTarget(float* target[3])
-{
+void skeleton::getTarget(float* target[3]) {
 	if (this->children.size() == 1)
 		this->children.at(0)->getTarget(target);
 	if (this->children.size() == 0)
 		*target = this->target;
-	if (this->children.size() > 1)
-	{
+	if (this->children.size() > 1){
 		*(target) = this->target;
 	}
 }
 
 //nesta funcao basta seguir um dos ramos, porque depois ele vai partir do end effort e vai recuar até ao pai e vai correr todos os filhos
-void skeleton::getEndPoints(std::vector<skeleton*>* endpoints)
-{
+void skeleton::getEndPoints(std::vector<skeleton*>* endpoints) {
 	if (this->children.empty() != true) {
 		this->children.at(0)->getEndPoints(endpoints);
 	}
@@ -116,9 +104,7 @@ void skeleton::getEndPoints(std::vector<skeleton*>* endpoints)
 	if (this->children.size() == 0) {
 
 		endpoints->push_back(this);
-
 	}
-
 }
 
 void skeleton::backward() {
@@ -130,15 +116,13 @@ void skeleton::forward() {
 }
 
 //O return effector vai devolver a root da sub tree para ser utilizado em arvores com varios ramos talvez mude depois
-void skeleton::update(float target[3], float* return_effector)
-{
+void skeleton::update(float target[3], float* return_effector) {
 	std::vector<skeleton*> all;
 	this->getAllSkeleton(&all);
 
 	float r = distance(target, this->me->start);
 	if (r > this->totalSize()) {
-		for (int i = 0; i < all.size(); i++)
-		{
+		for (int i = 0; i < all.size(); i++) {
 			float r = distance(target, all.at(i)->me->start);
 			float y = (all.at(i)->me->size) / r;
 
@@ -184,8 +168,7 @@ void skeleton::update(float target[3], float* return_effector)
 			all.at(i)->me->end[1] = target[1];
 			all.at(i)->me->end[2] = target[2];
 
-			for (i; i >= 0; i--)
-			{
+			for (i; i >= 0; i--) {
 				float r = distance(all.at(i)->me->end, all.at(i)->me->start);
 				float y = all.at(i)->me->size / r;
 
@@ -217,8 +200,7 @@ void skeleton::update(float target[3], float* return_effector)
 			all.at(0)->me->start[1] = b[1];
 			all.at(0)->me->start[2] = b[2];
 
-			for (i = 0; i < all.size() - 1; i++)
-			{
+			for (i = 0; i < all.size() - 1; i++) {
 				float r = distance(all.at(i)->me->start, all.at(i)->me->end);
 				float y = all.at(i)->me->size / r;
 
@@ -243,12 +225,8 @@ void skeleton::update(float target[3], float* return_effector)
 			dist = distance(target, end);
 
 		}
-
-
 	}
-
 }
-
 
 
 void skeleton::applyRestrictions(float firstVecX, float firstVecY, float firstVecZ) {
@@ -288,12 +266,10 @@ bool skeleton::multiUpdateIn(float* originalX, float* originalY, float* original
 	*(originalY) = this->me->start[1];
 	*(originalZ) = this->me->start[2];
 
-	for each (skeleton * sub in subRoots)
-	{
+	for each (skeleton * sub in subRoots) {
 
 		std::vector<float> positions;
-		for each (skeleton * children in sub->children)
-		{
+		for each (skeleton * children in sub->children) {
 			//Para cada filho vai buscar a sua chain até chegar ao fim ou até encontrar outra sub root
 			std::vector<skeleton*> chain;
 			children->getAllSkeleton(&chain);
@@ -331,8 +307,7 @@ bool skeleton::multiUpdateIn(float* originalX, float* originalY, float* original
 
 			//------restrições
 
-			for (i; i >= 0; i--)
-			{
+			for (i; i >= 0; i--) {
 
 				float r = distance(chain.at(i)->me->end, chain.at(i)->me->start);
 				float y = chain.at(i)->me->size / r;
@@ -460,8 +435,7 @@ bool skeleton::multiUpdateIn(float* originalX, float* originalY, float* original
 		float sumz = 0;
 		float i = 0;
 
-		for (i = 0; i < positions.size(); i += 3)
-		{
+		for (i = 0; i < positions.size(); i += 3) {
 
 			sumx += positions.at(i);
 			sumy += positions.at(i + 1);
@@ -497,13 +471,11 @@ bool skeleton::multiUpdateIn(float* originalX, float* originalY, float* original
 		//Agora que temos o centroid temos de por como end to pai e start de todos os filhos esse centroid
 		//Aqui nao sei se ponho so os filhos, ou so o pai, ou todos
 		//vou testar com todos para ja a ver
-		for each (skeleton * children in sub->children)
-		{
+		for each (skeleton * children in sub->children) {
 			children->me->start[0] = sub->me->start[0] + vector[0] * sub->me->size;
 			children->me->start[1] = sub->me->start[1] + vector[1] * sub->me->size;
 			children->me->start[2] = sub->me->start[2] + vector[2] * sub->me->size;
 		}
-
 	}
 	//Ja temos todos as sub roots processadas, falta agora correr o algoritmo normal da primeira sub base até á root principal
 	//Vai buscar a chain da raiz principal
@@ -546,8 +518,7 @@ bool skeleton::multiUpdateIn(float* originalX, float* originalY, float* original
 
 	//------restrições
 
-	for (i; i >= 0; i--)
-	{
+	for (i; i >= 0; i--) {
 		float r = distance(chain.at(i)->me->end, chain.at(i)->me->start);
 		float y = chain.at(i)->me->size / r;
 
@@ -639,10 +610,7 @@ bool skeleton::multiUpdateIn(float* originalX, float* originalY, float* original
 
 				normalize_skel(vector);
 			}
-
 		}
-
-
 	}
 	return true;
 }
@@ -678,8 +646,7 @@ void skeleton::multiUpdateOut(float originalX, float originalY, float originalZ)
 
 	//------restrições
 
-	for (int i = 0; i <= chain_root.size() - 1; i++)
-	{
+	for (int i = 0; i <= chain_root.size() - 1; i++) {
 		float r = distance(chain_root.at(i)->me->start, chain_root.at(i)->me->end);
 		float y = chain_root.at(i)->me->size / r;
 
@@ -761,14 +728,9 @@ void skeleton::multiUpdateOut(float originalX, float originalY, float originalZ)
 					vector[2] = chain_root.at(i)->me->angle_vector_out[2];
 				}
 
-				
-
 				normalize_skel(vector);
-
-
 			}
 		}
-		
 	}
 	//Agora vai ter de aplicar esta algoritmo para todas as sub chains que aparecem
 	//vai guardar os sub_roots a processar
@@ -777,16 +739,14 @@ void skeleton::multiUpdateOut(float originalX, float originalY, float originalZ)
 	processar.push_back(chain_root.at(chain_root.size() - 1));
 
 
-	while (processar.empty() != true)
-	{
+	while (processar.empty() != true) {
 		//printf("Processar tem %d elementos\n", processar.size());
 		//vai buscar o primeiro elemento a processar e tira-o da lista
 		skeleton* a_processar = processar.at(0);
 		processar.erase(processar.begin());
 
 
-		for each (skeleton * children in a_processar->children)
-		{
+		for each (skeleton * children in a_processar->children) {
 			std::vector<skeleton*> chain_2;
 			children->getAllSkeleton(&chain_2);
 
@@ -810,8 +770,7 @@ void skeleton::multiUpdateOut(float originalX, float originalY, float originalZ)
 
 			//------restrições
 
-			for (int i = 0; i <= chain_2.size() - 1; i++)
-			{
+			for (int i = 0; i <= chain_2.size() - 1; i++) {
 				float r = distance(chain_2.at(i)->me->start, chain_2.at(i)->me->end);
 				float y = chain_2.at(i)->me->size / r;
 
@@ -898,22 +857,17 @@ void skeleton::multiUpdateOut(float originalX, float originalY, float originalZ)
 						normalize_skel(vector);
 
 
-					}
-				
+					}	
 				}
-				
-
 			}
 			if (chain_2.at(chain_2.size() - 1)->children.size() > 1) {
 				processar.push_back(chain_2.at(chain_2.size() - 1));
 			}
 		}
-
 	}
 }
 
-void skeleton::multiUpdate(skeleton* targets[4])
-{
+void skeleton::multiUpdate(skeleton* targets[4]) {
 	float vec1[3] = {0,1,0};
 	float vec2[3] = { 1,0,0 };
 	float res[3];
@@ -923,28 +877,17 @@ void skeleton::multiUpdate(skeleton* targets[4])
 	printf("O resultado deu %f %f %f \n", res[0], res[1], res[2]);
 
 	float originalx, originaly, originalz;
-	for (int k = 0; k < 1; k++)
-	{
+	for (int k = 0; k < 1; k++) {
 
 		bool ret = this->multiUpdateIn(&originalx, &originaly, &originalz);
 
 		this->multiUpdateOut(originalx, originaly, originalz);
-
-		
-
 	}
-
-
-
 }
 
-
-void skeleton::getSubRoots(std::vector<skeleton*>* subRoots)
-{
-	if (this->children.size() > 1)
-	{
-		for each (skeleton * children in this->children)
-		{
+void skeleton::getSubRoots(std::vector<skeleton*>* subRoots) {
+	if (this->children.size() > 1) {
+		for each (skeleton * children in this->children) {
 
 			children->getSubRoots(subRoots);
 		}
@@ -954,19 +897,14 @@ void skeleton::getSubRoots(std::vector<skeleton*>* subRoots)
 	else if (this->children.size() == 1) {
 		this->children.at(0)->getSubRoots(subRoots);
 	}
-
-
-
 }
 
 
-float skeleton::distance(float p1[3], float p2[3])
-{
+float skeleton::distance(float p1[3], float p2[3]) {
 	return sqrtf(pow((p1[0] - p2[0]), 2) + pow((p1[1] - p2[1]), 2) + pow((p1[2] - p2[2]), 2));
 }
 
-float skeleton::totalSize()
-{
+float skeleton::totalSize() {
 	float result = this->me->size;
 	if (this->children.size() == 1)
 		result += this->children.at(0)->totalSize();
@@ -974,47 +912,38 @@ float skeleton::totalSize()
 	return result;
 }
 
-float* skeleton::getEndEffector()
-{
+float* skeleton::getEndEffector() {
 	if (this->children.empty()) {
 		return this->me->end;
 	}
-	else
-	{
+	else {
 		this->children.at(0)->getEndEffector();
 	}
-
 }
 
-void skeleton::getAllSkeleton(std::vector<skeleton*>* ret)
-{
+void skeleton::getAllSkeleton(std::vector<skeleton*>* ret) {
 	ret->push_back(this);
 	if (this->children.empty())
 		return;
 	if (this->children.size() == 1) {
 		this->children.at(0)->getAllSkeleton(ret);
 	}
-
 }
 
-skeleton::skeleton(float in_start[3], float in_end[3],float angle_in, float angle_vector_in[3], float angle_out, float angle_vector_out[3])
-{
+skeleton::skeleton(float in_start[3], float in_end[3],float angle_in, float angle_vector_in[3], float angle_out, float angle_vector_out[3]) {
 	Bone* b = new Bone(in_start, in_end,angle_in, angle_vector_in, angle_out, angle_vector_out);
 	this->me = b;
 	this->parent = NULL;
 	std::vector<skeleton*> children;
 	this->children = children;
-
 }
 
-skeleton::~skeleton()
-{
+skeleton::~skeleton() {
 	//delete [] this->target;
 	//delete [] this->me;
 	//delete [] this->parent;
 
-	for each (skeleton * s in this->children)
-	{
+	for each (skeleton * s in this->children) {
 		s->~skeleton();
 		delete s;
 	}

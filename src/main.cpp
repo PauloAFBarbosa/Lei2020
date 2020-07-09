@@ -18,6 +18,7 @@ float rot = 0;
 int winid = 0;
 
 int controlling;
+int qtargets;
 
 skeleton* targets[5];
 
@@ -51,6 +52,8 @@ void processKeys(unsigned char c, int xx, int yy) {
 		break;
 	case 'j':
 		controlling++;
+		if (controlling >= qtargets)
+			controlling = qtargets - 1;
 		break;
 	case 'k':
 		controlling--;
@@ -258,6 +261,7 @@ void renderScene(void) {
 int main(int argc, char** argv) {
 
 	controlling = 0;
+	qtargets = 5;
 
 	//skeleton points
 	float start[3] = { 0,0,0 };

@@ -6,8 +6,7 @@
 
 
 
-Bone::Bone()
-{
+Bone::Bone() {
 	this->start[0] = 0;
 	this->start[1] = 0;
 	this->start[2] = 0;
@@ -19,8 +18,7 @@ Bone::Bone()
 	this->size = 1;
 }
 
-Bone::Bone(float in_start[3], float in_end[3],float angle_in, float angle_vector_in[3], float angle_out, float angle_vector_out[3])
-{
+Bone::Bone(float in_start[3], float in_end[3],float angle_in, float angle_vector_in[3], float angle_out, float angle_vector_out[3]) {
 	this->start[0] = in_start[0];
 	this->start[1] = in_start[1];
 	this->start[2] = in_start[2];
@@ -73,8 +71,7 @@ float length(float* v) {
 }
 
 
-void Bone::draw()
-{
+void Bone::draw() {
 	glPushMatrix();
 
 	GLUquadric* qobj;
@@ -116,8 +113,7 @@ void Bone::draw()
 	glPopMatrix();
 }
 
-Bone::~Bone()
-{
+Bone::~Bone() {
 	//delete [] this->start;
 	//delete [] this->end;
 	//delete this->size;

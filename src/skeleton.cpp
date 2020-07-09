@@ -8,9 +8,6 @@ bool inwards = true;
 bool outwards = true;
 bool restrictions = true;
 
-
-
-
 void skeleton::changeinwards() {
 	inwards = !inwards;
 }

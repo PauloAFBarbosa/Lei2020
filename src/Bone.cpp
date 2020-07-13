@@ -18,7 +18,7 @@ Bone::Bone() {
 	this->size = 1;
 }
 
-Bone::Bone(float in_start[3], float in_end[3],float angle_in, float angle_vector_in[3], float angle_out, float angle_vector_out[3]) {
+Bone::Bone(float in_start[3], float in_end[3],float angle_in, float angle_vector_in[3], float angle_out, float angle_vector_out[3],bool fixed_in, bool fixed_out) {
 	this->start[0] = in_start[0];
 	this->start[1] = in_start[1];
 	this->start[2] = in_start[2];
@@ -27,7 +27,22 @@ Bone::Bone(float in_start[3], float in_end[3],float angle_in, float angle_vector
 	this->end[1] = in_end[1];
 	this->end[2] = in_end[2];
 
+	this->original_in[0] = angle_vector_in[0];
+	this->original_in[1] = angle_vector_in[1];
+	this->original_in[2] = angle_vector_in[2];
+
+	this->original_out[0] = angle_vector_out[0];
+	this->original_out[1] = angle_vector_out[1];
+	this->original_out[2] = angle_vector_out[2];
+
+	this->original_vec[0]=this->end[0] - this->start[0];
+	this->original_vec[1] = this->end[1] - this->start[1];
+	this->original_vec[2] = this->end[2] - this->start[2];
+
 	this->angle_in = angle_in;
+
+	this->fixed_in = fixed_in;
+	this->fixed_out = fixed_out;
 
 	this->angle_vector_in[0] = angle_vector_in[0];
 	this->angle_vector_in[1] = angle_vector_in[1];
@@ -70,6 +85,97 @@ float length(float* v) {
 
 }
 
+void Bone::draw_vecs() {
+	//Roxo =in
+
+	//amarelo = out
+	
+	//in
+	{
+		glPushMatrix();
+
+		GLUquadric* qobj;
+		qobj = gluNewQuadric();
+		gluQuadricNormals(qobj, GLU_SMOOTH);
+
+
+		float vector[3];
+
+		vector[0] = this->angle_vector_in[0];
+		vector[1] = this->angle_vector_in[1];
+		vector[2] = this->angle_vector_in[2];
+
+		float original[3] = { 0,0,1 };
+		float res[3];
+
+		normalize(vector);
+
+		cross(vector, original, res);
+
+		float dot = vector[0] * original[0] + vector[1] * original[1] + vector[2] * original[2];
+		float lenSq1 = vector[0] * vector[0] + vector[1] * vector[1] + vector[2] * vector[2];
+		float lenSq2 = original[0] * original[0] + original[1] * original[1] + original[2] * original[2];
+		float angle = acos(dot / sqrt(lenSq1 * lenSq2));
+
+		glTranslatef(end[0], end[1], end[2]);
+		//printf("Dentro do draw %f %f %f", start[0], start[1], start[2]);
+
+		if (angle != 0 && res[0] == 0 && res[1] == 0 && res[2] == 0) {
+			glRotatef(angle * (-57.3), 1, 0, 0);
+		}
+		else
+			glRotatef(angle * (-57.3), res[0], res[1], res[2]);
+		glColor3f(1.0f, 0.0f, 1.0f);
+		glutWireCone(0.1, 2,
+			5, 5);
+		glColor3f(0.0f, 0.0f, 1.0f);
+		glPopMatrix();
+	}
+	
+	//out
+	{
+		glPushMatrix();
+
+		GLUquadric* qobj;
+		qobj = gluNewQuadric();
+		gluQuadricNormals(qobj, GLU_SMOOTH);
+
+
+		float vector[3];
+
+		vector[0] = this->angle_vector_out[0];
+		vector[1] = this->angle_vector_out[1];
+		vector[2] = this->angle_vector_out[2];
+
+		float original[3] = { 0,0,1 };
+		float res[3];
+
+		normalize(vector);
+
+		cross(vector, original, res);
+
+		float dot = vector[0] * original[0] + vector[1] * original[1] + vector[2] * original[2];
+		float lenSq1 = vector[0] * vector[0] + vector[1] * vector[1] + vector[2] * vector[2];
+		float lenSq2 = original[0] * original[0] + original[1] * original[1] + original[2] * original[2];
+		float angle = acos(dot / sqrt(lenSq1 * lenSq2));
+
+		glTranslatef(start[0], start[1], start[2]);
+		//printf("Dentro do draw %f %f %f", start[0], start[1], start[2]);
+
+		if (angle != 0 && res[0] == 0 && res[1] == 0 && res[2] == 0) {
+			glRotatef(angle * (-57.3), 1, 0, 0);
+		}
+		else
+			glRotatef(angle * (-57.3), res[0], res[1], res[2]);
+		glColor3f(1.0f, 1.0f, 0.0f);
+		glutWireCone(0.1, 2,
+			5, 5);
+		glColor3f(0.0f, 0.0f, 1.0f);
+		glPopMatrix();
+	}
+	
+	
+}
 
 void Bone::draw() {
 	glPushMatrix();
@@ -111,6 +217,8 @@ void Bone::draw() {
 	gluCylinder(qobj, 0.2, 0.2, this->size, 10, 10);
 
 	glPopMatrix();
+
+	
 }
 
 Bone::~Bone() {

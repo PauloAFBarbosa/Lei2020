@@ -246,9 +246,10 @@ void renderScene(void) {
 
 	glColor3f(0.0f, 0.0f, 1.0f);
 
-	up->draw();
+	//up->draw();
 	down->draw();
-	up->multiUpdate(targets);
+	
+	//up->multiUpdate(targets);
 	down->multiUpdate(targets);
    
 	drawAxis();
@@ -292,22 +293,22 @@ int main(int argc, char** argv) {
 
 	
 	//Parte superior
-	up = new skeleton(start, up1,0.1, angle_vector_null, 0.1, angle_vector_null);
+	up = new skeleton(start, up1,0.1, angle_vector_null, 0.1, angle_vector_null,false,false);
 	//Tronco
-	up->addChildren(up2, 1.58, angle_vector_null, 1.58, angle_vector_null);
+	up->addChildren(up2, 1.58, angle_vector_null, 1.58, angle_vector_null, false, false);
 	//Cabeça
-	up->children.at(0)->addChildren(up3, 1.58, angle_vector_null, 1.58, angle_vector_null);
-	up->children.at(0)->children.at(0)->addChildren(up4, 1.58, angle_vector_null, 1.58, angle_vector_null);
-	up->children.at(0)->children.at(0)->children.at(0)->addChildren(up11, 1.58, angle_vector_null, 1.58, angle_vector_null);
+	up->children.at(0)->addChildren(up3, 1.58, angle_vector_null, 1.58, angle_vector_null, false, false);
+	up->children.at(0)->children.at(0)->addChildren(up4, 1.58, angle_vector_null, 1.58, angle_vector_null, false, false);
+	up->children.at(0)->children.at(0)->children.at(0)->addChildren(up11, 1.58, angle_vector_null, 1.58, angle_vector_null, false, false);
 	//braço 1
-	up->children.at(0)->addChildren(up5, 1.58, angle_vector_null, 1.58, angle_vector_null);
+	up->children.at(0)->addChildren(up5, 1.58, angle_vector_null, 1.58, angle_vector_null, false, false);
 	float angle_bracos[3] = { 0,0,-1 };
-	up->children.at(0)->children.at(1)->addChildren(up6, 1.58, angle_bracos, 1.58, angle_bracos);
-	up->children.at(0)->children.at(1)->children.at(0)->addChildren(up7, 1.58, angle_vector_null, 1.58, angle_vector_null);
+	up->children.at(0)->children.at(1)->addChildren(up6, 1.58, angle_vector_null, 1.58, angle_vector_null, false, false);
+	up->children.at(0)->children.at(1)->children.at(0)->addChildren(up7, 1.58, angle_vector_null, 1.58, angle_vector_null, false, false);
 	//braço 2
-	up->children.at(0)->addChildren(up8, 1.58, angle_vector_null, 1.58, angle_vector_null);
-	up->children.at(0)->children.at(2)->addChildren(up9, 1.58, angle_bracos, 1.58, angle_bracos);
-	up->children.at(0)->children.at(2)->children.at(0)->addChildren(up10, 1.58, angle_vector_null, 1.58, angle_vector_null);
+	up->children.at(0)->addChildren(up8, 1.58, angle_vector_null, 1.58, angle_vector_null, false, false);
+	up->children.at(0)->children.at(2)->addChildren(up9, 1.58, angle_vector_null, 1.58, angle_vector_null, false, false);
+	up->children.at(0)->children.at(2)->children.at(0)->addChildren(up10, 1.58, angle_vector_null, 1.58, angle_vector_null, false, false);
 	
 	//Parte inferior
 	float angle_pernas_down[3] = { 0,-1,0 };
@@ -317,16 +318,16 @@ int main(int argc, char** argv) {
 	float angle_pernas_front[3] = { 0,0,1 };
 	float angle_pernas_back[3] = { 0,0,-1 };
 
-	down = new skeleton(start, down1, 1.58, angle_vector_null, 1.58, angle_vector_null);
+	down = new skeleton(start, down1, 0.2, angle_pernas_up, 0.2, angle_pernas_down, true, true);
 	//Perna 1
 
-	down->addChildren(down2, 1.58, angle_vector_null, 1.58, angle_vector_null);
-	down->children.at(0)->addChildren(down3, 1.58, angle_vector_null, 1.58, angle_vector_null);
-	down->children.at(0)->children.at(0)->addChildren(down4, 1.58, angle_vector_null, 1.58, angle_vector_null);
+	down->addChildren(down2, 0.01, angle_pernas_right, 0.01, angle_pernas_left, true, true);
+	down->children.at(0)->addChildren(down3, 1.58, angle_pernas_back, 1.58, angle_pernas_front, false, true);
+	down->children.at(0)->children.at(0)->addChildren(down4, 1.58, angle_pernas_front, 1.58, angle_pernas_back, false, false);
 	//Perna 2
-	down->addChildren(down5, 1.58, angle_vector_null, 1.58, angle_vector_null);
-	down->children.at(1)->addChildren(down6, 1.58, angle_vector_null, 1.58, angle_vector_null);
-	down->children.at(1)->children.at(0)->addChildren(down7, 1.58, angle_vector_null, 1.58, angle_vector_null);
+	down->addChildren(down5, 0.01, angle_pernas_left, 0.01, angle_pernas_right, true, true);
+	down->children.at(1)->addChildren(down6, 1.58, angle_pernas_back, 1.58, angle_pernas_front, false, true);
+	down->children.at(1)->children.at(0)->addChildren(down7, 1.58, angle_pernas_front, 1.58, angle_pernas_back, false, false);
 
 	//Targets
 	up->children.at(0)->children.at(0)->children.at(0)->children.at(0)->setTarget(0, 4.5, 1);//Cabeça

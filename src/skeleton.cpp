@@ -21,8 +21,8 @@ void skeleton::changerestrictions() {
 }
 
 
-void skeleton::addChildren(float in_end[3],float angle_in,float angle_vector_in[3], float angle_out, float angle_vector_out[3]) {
-	skeleton* s = new skeleton(this->me->end, in_end,angle_in,angle_vector_in, angle_out, angle_vector_out);
+void skeleton::addChildren(float in_end[3],float angle_in,float angle_vector_in[3], float angle_out, float angle_vector_out[3], bool fixed_in, bool fixed_out) {
+	skeleton* s = new skeleton(this->me->end, in_end,angle_in,angle_vector_in, angle_out, angle_vector_out,fixed_in,fixed_out);
 
 	s->setParent(this);
 	this->children.push_back(s);
@@ -74,6 +74,7 @@ void normalize_skel(float* a) {
 void skeleton::draw() {
 
 	this->me->draw();
+	this->me->draw_vecs();
 	for each (skeleton * s in this->children) {
 		s->draw();
 	}
@@ -113,6 +114,62 @@ void skeleton::backward() {
 
 void skeleton::forward() {
 
+}
+
+void skeleton::update_vec(Bone* b) {
+	float vec1[3], vec2[3];
+
+	vec1[0] = b->original_vec[0];
+	vec1[1] = b->original_vec[1];
+	vec1[2] = b->original_vec[2];
+
+	//b->original_pos[0]=0;
+	//b->original_pos[1] = 0;
+	//b->original_pos[2] = 0;
+	normalize_skel(vec1);
+
+	vec2[0] = b->end[0] - b->start[0];
+	vec2[1] = b->end[1] - b->start[1];
+	vec2[2] = b->end[2] - b->start[2];
+	normalize_skel(vec2);
+
+	float dot = vec1[0] * vec2[0] + vec1[1] * vec2[1] + vec1[2] * vec2[2];
+	
+	float angle = acosf(dot);
+
+	float res_in[3];
+	float res_out[3];
+
+	rotate(b->original_in,vec1, vec2, angle, res_in);
+	rotate(b->original_out, vec1,vec2, angle, res_out);
+
+	normalize_skel(res_in);
+	normalize_skel(res_out);
+
+	printf("vec1 %f %f %f \n", vec1[0], vec1[1], vec1[2]);
+	printf("vec2 %f %f %f \n", vec2[0], vec2[1], vec2[2]);
+
+	printf("Angle %f\n", angle);
+
+	printf("Res in %f %f %f \n", res_in[0], res_in[1], res_in[2]);
+	printf("Res out %f %f %f \n", res_out[0], res_out[1], res_out[2]);
+
+	printf("start %f %f %f \n", b->start[0], b->start[1], b->start[2]);
+	printf("end   %f %f %f \n", b->end[0], b->end[1], b->end[2]);
+
+
+
+	printf("------\n");
+	if (b->fixed_in == false) {
+		b->angle_vector_in[0] = res_in[0];
+		b->angle_vector_in[1] = res_in[1];
+		b->angle_vector_in[2] = res_in[2];
+	}
+	if (b->fixed_out == false) {
+		b->angle_vector_out[0] = res_out[0];
+		b->angle_vector_out[1] = res_out[1];
+		b->angle_vector_out[2] = res_out[2];
+	}
 }
 
 //O return effector vai devolver a root da sub tree para ser utilizado em arvores com varios ramos talvez mude depois
@@ -233,22 +290,33 @@ void skeleton::applyRestrictions(float firstVecX, float firstVecY, float firstVe
 
 }
 
-void rotate(float original[3], float target_vector[3],float angle ,float res[3]) {
-
+void skeleton::rotate(float original[3],float from[3], float to[3],float angle ,float res[3]) {
+	
 	glm::dvec3 v(original[0], original[1], original[2]);
-	
+	normalize_skel(from);
+	normalize_skel(to);
 	float perp[3];
-	cross_skel(original, target_vector, perp);
-	
+	cross_skel(from, to, perp);
+	normalize_skel(perp);
 	glm::dvec3 k(perp[0], perp[1], perp[2]);
 
 	double theta = angle;
+	
+	if ((perp[0] != 0 || perp[1] != 0 || perp[2] != 0)&& angle >0.00001) {
+		glm::dvec3 rotated = glm::rotate(v, theta, k);
 
-	glm::dvec3 rotated = glm::rotate(v, theta, k);
+		res[0] = rotated.x;
+		res[1] = rotated.y;
+		res[2] = rotated.z;
 
-	res[0] = rotated.x;
-	res[1] = rotated.y;
-	res[2] = rotated.z;
+		//printf("Rotate angulo %f vec original %f %f %f eixo %f %f %f resultado %f %f %f\n", theta, original[0], original[1], original[2], perp[0], perp[1], perp[2], res[0], res[1], res[2]);
+	}
+	else {
+		res[0] = original[0];
+		res[1] = original[1];
+		res[2] = original[2];
+	}
+	
 
 	
 }
@@ -311,7 +379,7 @@ bool skeleton::multiUpdateIn(float* originalX, float* originalY, float* original
 			//------restrições
 
 			for (i; i >= 0; i--) {
-
+				
 				float r = distance(chain.at(i)->me->end, chain.at(i)->me->start);
 				float y = chain.at(i)->me->size / r;
 
@@ -340,7 +408,7 @@ bool skeleton::multiUpdateIn(float* originalX, float* originalY, float* original
 				//vector[3] é o vetor que esta no centro do cone
 				
 				
-				if (i < chain.size() - 1) {
+				if (i <= chain.size() - 1) {
 					//Vai ver se o ponto esta dentro ou fora do cone
 					float point[3];
 
@@ -349,9 +417,9 @@ bool skeleton::multiUpdateIn(float* originalX, float* originalY, float* original
 					point[2] = chain.at(i)->me->start[2];
 
 					float original_point[3];
-					original_point[0] = chain.at(i + 1)->me->start[0];
-					original_point[1] = chain.at(i + 1)->me->start[1];
-					original_point[2] = chain.at(i + 1)->me->start[2];
+					original_point[0] = chain.at(i)->me->end[0];
+					original_point[1] = chain.at(i)->me->end[1];
+					original_point[2] = chain.at(i)->me->end[2];
 
 					float angle = chain.at(i)->me->angle_in;
 
@@ -373,7 +441,7 @@ bool skeleton::multiUpdateIn(float* originalX, float* originalY, float* original
 							
 						float resultado[3];
 							
-						rotate(vector, vector_teste, angle ,resultado);
+						rotate(vector, vector, vector_teste, angle ,resultado);
 
 						normalize_skel(resultado);
 						
@@ -515,6 +583,7 @@ bool skeleton::multiUpdateIn(float* originalX, float* originalY, float* original
 	//------restrições
 
 	for (i; i >= 0; i--) {
+
 		float r = distance(chain.at(i)->me->end, chain.at(i)->me->start);
 		float y = chain.at(i)->me->size / r;
 
@@ -535,7 +604,7 @@ bool skeleton::multiUpdateIn(float* originalX, float* originalY, float* original
 		}
 
 		
-		if (i < chain.size() - 1) {
+		if (i <= chain.size() - 1) {
 			//Vai ver se o ponto esta dentro ou fora do cone
 			float point[3];
 
@@ -544,9 +613,9 @@ bool skeleton::multiUpdateIn(float* originalX, float* originalY, float* original
 			point[2] = chain.at(i)->me->start[2];
 
 			float original_point[3];
-			original_point[0] = chain.at(i + 1)->me->start[0];
-			original_point[1] = chain.at(i + 1)->me->start[1];
-			original_point[2] = chain.at(i + 1)->me->start[2];
+			original_point[0] = chain.at(i )->me->end[0];
+			original_point[1] = chain.at(i )->me->end[1];
+			original_point[2] = chain.at(i )->me->end[2];
 
 			//vai buscar o angulo do osso
 			float angle = chain.at(i)->me->angle_in;
@@ -568,7 +637,7 @@ bool skeleton::multiUpdateIn(float* originalX, float* originalY, float* original
 				
 				float resultado[3];
 
-				rotate(vector, vector_teste, angle, resultado);
+				rotate(vector, vector, vector_teste, angle, resultado);
 
 				normalize_skel(resultado);
 
@@ -617,7 +686,7 @@ void skeleton::multiUpdateOut(float originalX, float originalY, float originalZ)
 	//Acabou agora a parte 1 do algoritmo
 		//vai começar na raiz principal e subir
 
-
+ 
 	std::vector<skeleton*> chain_root;
 	this->getAllSkeleton(&chain_root);
 
@@ -665,7 +734,7 @@ void skeleton::multiUpdateOut(float originalX, float originalY, float originalZ)
 		}
 		
 		
-		if (i>0) {
+		if (i>=0) {
 			float point[3];
 
 			point[0] = chain_root.at(i)->me->end[0];
@@ -695,7 +764,7 @@ void skeleton::multiUpdateOut(float originalX, float originalY, float originalZ)
 			if (acos > angle) {
 				
 				float resultado[3];
-				rotate(vector, vector_teste, angle, resultado);
+				rotate(vector, vector, vector_teste, angle, resultado);
 
 				normalize_skel(resultado);
 
@@ -717,6 +786,9 @@ void skeleton::multiUpdateOut(float originalX, float originalY, float originalZ)
 				}
 				
 			}
+			
+			
+
 			if (chain_root.at(i)->me->angle_vector_out[0] == 0 && chain_root.at(i)->me->angle_vector_out[1] == 0 && chain_root.at(i)->me->angle_vector_out[2] == 0) {
 				vector[0] = chain_root.at(i)->me->end[0] - chain_root.at(i)->me->start[0];
 				vector[1] = chain_root.at(i)->me->end[1] - chain_root.at(i)->me->start[1];
@@ -732,6 +804,8 @@ void skeleton::multiUpdateOut(float originalX, float originalY, float originalZ)
 			}
 			normalize_skel(vector);
 		}
+		//update_vec
+		update_vec(chain_root.at(i)->me);
 	}
 	//Agora vai ter de aplicar esta algoritmo para todas as sub chains que aparecem
 	//vai guardar os sub_roots a processar
@@ -750,12 +824,12 @@ void skeleton::multiUpdateOut(float originalX, float originalY, float originalZ)
 		for each (skeleton * children in a_processar->children) {
 			std::vector<skeleton*> chain_2;
 			children->getAllSkeleton(&chain_2);
-
-			//vou testar aplicar agora coisas aqui e ver se a parte de cima da arvore funciona bem 
-
 			//------restrições
 			//vai calcular o vetor para as restrições seguintes
 			float vector[3];
+			chain_2.at(0)->me->start[0] = chain_root.at(chain_root.size()-1)->me->end[0];
+			chain_2.at(0)->me->start[1] = chain_root.at(chain_root.size() - 1)->me->end[1];
+			chain_2.at(0)->me->start[2] = chain_root.at(chain_root.size() - 1)->me->end[2];
 
 			if (chain_2.at(0)->me->angle_vector_out[0] == 0 && chain_2.at(0)->me->angle_vector_out[1] == 0 && chain_2.at(0)->me->angle_vector_out[2] == 0) {
 				vector[0] = chain_2.at(0)->me->end[0] - chain_2.at(0)->me->start[0];
@@ -792,7 +866,7 @@ void skeleton::multiUpdateOut(float originalX, float originalY, float originalZ)
 					chain_2.at(i + 1)->me->start[2] = temp3;
 				}
 				
-				if (i>0) {
+				if (i>=0) {
 					float point[3];
 
 					point[0] = chain_2.at(i)->me->end[0];
@@ -823,7 +897,7 @@ void skeleton::multiUpdateOut(float originalX, float originalY, float originalZ)
 					if (acos > angle) {
 						
 						float resultado[3];
-						rotate(vector, vector_teste, angle, resultado);
+						rotate(vector, vector, vector_teste, angle, resultado);
 
 						normalize_skel(resultado);
 
@@ -846,6 +920,9 @@ void skeleton::multiUpdateOut(float originalX, float originalY, float originalZ)
 
 
 					}
+
+					
+
 					if (chain_2.at(i)->me->angle_vector_out[0] == 0 && chain_2.at(i)->me->angle_vector_out[1] == 0 && chain_2.at(i)->me->angle_vector_out[2] == 0) {
 						vector[0] = chain_2.at(i)->me->end[0] - chain_2.at(i)->me->start[0];
 						vector[1] = chain_2.at(i)->me->end[1] - chain_2.at(i)->me->start[1];
@@ -862,6 +939,7 @@ void skeleton::multiUpdateOut(float originalX, float originalY, float originalZ)
 					normalize_skel(vector);
 				
 				}
+				update_vec(chain_2.at(i)->me);
 			}
 			if (chain_2.at(chain_2.size() - 1)->children.size() > 1) {
 				processar.push_back(chain_2.at(chain_2.size() - 1));
@@ -875,20 +953,25 @@ void skeleton::multiUpdate(skeleton* targets[4])
 	
 	/*
 	float start[3] = {0,0,0};
-	float end[3] = {0,1,0};
-	float in[3] = {0,1,0};
-	float out[3] = {0,1,0};
+	float end[3] = {0,-0.5,-0.5};
+	float in[3] = {0,0,-1};
+	float out[3] = {0,0,1};
 	float res_in[3], res_out[3];
-	float angle = 2;
 	
-	Bone* b = new Bone(start, end, angle, in,2, out);
+	
+	Bone* b = new Bone(start, end, 2, in,2, out,false,false);
 
+	b->original_pos[0] = 0;
+	b->original_pos[1] = -1;
+	b->original_pos[2] = 0;
 
-	update_vec(b, res_in, res_out);
+	update_vec(b);
 
-	printf("Res in %f %f %f \n", res_in[0], res_in[1], res_in[2]);
+	printf("FORA Res in %f %f %f \n", b->angle_vector_in[0], b->angle_vector_in[1], b->angle_vector_in[2]);
+	printf("FORA Res in %f %f %f \n", b->angle_vector_out[0], b->angle_vector_out[1], b->angle_vector_out[2]);
+
+	
 	*/
-	
 	float originalx, originaly, originalz;
 	for (int k = 0; k < 1; k++) {
 
@@ -943,8 +1026,8 @@ void skeleton::getAllSkeleton(std::vector<skeleton*>* ret) {
 	}
 }
 
-skeleton::skeleton(float in_start[3], float in_end[3],float angle_in, float angle_vector_in[3], float angle_out, float angle_vector_out[3]) {
-	Bone* b = new Bone(in_start, in_end,angle_in, angle_vector_in, angle_out, angle_vector_out);
+skeleton::skeleton(float in_start[3], float in_end[3],float angle_in, float angle_vector_in[3], float angle_out, float angle_vector_out[3], bool fixed_in, bool fixed_out) {
+	Bone* b = new Bone(in_start, in_end,angle_in, angle_vector_in, angle_out, angle_vector_out, fixed_in, fixed_out);
 	this->me = b;
 	this->parent = NULL;
 	std::vector<skeleton*> children;

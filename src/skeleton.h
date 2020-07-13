@@ -21,6 +21,7 @@ public:
 
 	void addChildren(float in_end[3],float angle_in,float angle_vector_in[3], float angle_out, float angle_vector_out[3], bool fixed_in, bool fixed_out);
 	void addChildren(skeleton* child);
+	
 	void setParent(skeleton* s);
 	void draw();
 	void setTarget(float x, float y, float z);

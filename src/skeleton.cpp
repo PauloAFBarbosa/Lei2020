@@ -49,15 +49,6 @@ void buildRotMatrix(float* x, float* y, float* z, float* m) {
 	m[12] = 0; m[13] = 0; m[14] = 0; m[15] = 1;
 }
 
-void multMatrixVector(float* m, float* v, float* res) {
-
-	for (int j = 0; j < 4; ++j) {
-		res[j] = 0;
-		for (int k = 0; k < 4; ++k) {
-			res[j] += v[k] * m[j * 4 + k];
-		}
-	}
-}
 
 void skeleton::setParent(skeleton* s) {
 	this->parent = s;
@@ -74,7 +65,8 @@ void normalize_skel(float* a) {
 void skeleton::draw() {
 
 	this->me->draw();
-	this->me->draw_vecs();
+
+	//this->me->draw_vecs();
 	for each (skeleton * s in this->children) {
 		s->draw();
 	}
@@ -146,20 +138,20 @@ void skeleton::update_vec(Bone* b) {
 	normalize_skel(res_in);
 	normalize_skel(res_out);
 
-	printf("vec1 %f %f %f \n", vec1[0], vec1[1], vec1[2]);
-	printf("vec2 %f %f %f \n", vec2[0], vec2[1], vec2[2]);
+	//printf("vec1 %f %f %f \n", vec1[0], vec1[1], vec1[2]);
+	//printf("vec2 %f %f %f \n", vec2[0], vec2[1], vec2[2]);
 
-	printf("Angle %f\n", angle);
+	//printf("Angle %f\n", angle);
 
-	printf("Res in %f %f %f \n", res_in[0], res_in[1], res_in[2]);
-	printf("Res out %f %f %f \n", res_out[0], res_out[1], res_out[2]);
+	//printf("Res in %f %f %f \n", res_in[0], res_in[1], res_in[2]);
+	//printf("Res out %f %f %f \n", res_out[0], res_out[1], res_out[2]);
 
-	printf("start %f %f %f \n", b->start[0], b->start[1], b->start[2]);
-	printf("end   %f %f %f \n", b->end[0], b->end[1], b->end[2]);
+	//printf("start %f %f %f \n", b->start[0], b->start[1], b->start[2]);
+	//printf("end   %f %f %f \n", b->end[0], b->end[1], b->end[2]);
 
 
 
-	printf("------\n");
+	//printf("------\n");
 	if (b->fixed_in == false) {
 		b->angle_vector_in[0] = res_in[0];
 		b->angle_vector_in[1] = res_in[1];

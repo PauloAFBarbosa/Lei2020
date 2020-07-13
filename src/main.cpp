@@ -10,6 +10,30 @@
 #define _USE_MATH_DEFINES
 #include <math.h>
 
+#define POINT_COUNT 5
+// Points that make up the loop for catmull-rom interpolation
+//braços
+float p[POINT_COUNT][3] = { {0,-1,-2},{0,-2,-2},{0,-2,2} ,{0,-1,2},{0,0,0} };
+
+float p2[POINT_COUNT][3] = { {0,-1,2} ,{0,0,0} ,{0,-1,-2},{0,-2,-2},{0,-2,2}  };
+
+//pernas
+float p4[POINT_COUNT][3] = { {0,-1,-2},{0,-2,-2},{0,-2,2} ,{0,-1,2},{0,0,0} };
+
+float p3[POINT_COUNT][3] = { {0,-1,2} ,{0,0,0} ,{0,-1,-2},{0,-2,-2},{0,-2,2} };
+
+//cabeça
+float p5[POINT_COUNT][3] = { {0,5,-1},{2,0,3} ,{2,-0.5,3} ,{-2,-0.5,3},{-2,0,3} };
+
+int working = 0;
+
+float oldy[4] = { 1,0,0,0 };
+
+int time;
+int timebase;
+int maxTime = 10000;
+float stepT = 100.0f / maxTime;
+
 skeleton* up;
 skeleton* down;
 float alfa = 0.0f, beta = 0.5f, radius = 20.0f;
@@ -21,6 +45,13 @@ int controlling;
 int qtargets;
 
 skeleton* targets[5];
+
+float length_main(float* v) {
+
+	float res = sqrt(v[0] * v[0] + v[1] * v[1] + v[2] * v[2]);
+	return res;
+
+}
 
 void spherical2Cartesian() {
 	camX = radius * cos(beta) * sin(alfa);
@@ -185,7 +216,152 @@ void drawAxis() {
 	glFlush();
 }
 
+
+
+float multvec(float* v1, float* v2) {
+	float res = 0;
+	for (int i = 0; i < 4; i++)
+	{
+		res += v1[i] * v2[i];
+	}
+	return res;
+}
+void multMatrixVector(float* m, float* v, float* res) {
+
+	for (int j = 0; j < 4; ++j) {
+		res[j] = 0;
+		for (int k = 0; k < 4; ++k) {
+			res[j] += v[k] * m[j * 4 + k];
+		}
+	}
+}
+
+void getCatmullRomPoint(float t, float* p0, float* p1, float* p2, float* p3, float* pos, float* deriv) {
+
+	// catmull-rom matrix
+	float m[4][4] = { {-0.5f,  1.5f, -1.5f,  0.5f},
+						{ 1.0f, -2.5f,  2.0f, -0.5f},
+						{-0.5f,  0.0f,  0.5f,  0.0f},
+						{ 0.0f,  1.0f,  0.0f,  0.0f} };
+	float vt[4] = { t * t * t,t * t,t,1 };
+	float dvt[4] = { 3 * t * t,2 * t,1,0 };
+	float p[4];
+	float x = 0, y = 0, z = 0, dx = 0, dy = 0, dz = 0;
+	float auxvec[4] = { p0[0], p1[0], p2[0], p3[0] };
+
+	multMatrixVector((float*)m, auxvec, p);
+	x = multvec(vt, p);
+	dx = multvec(dvt, p);
+
+	auxvec[0] = p0[1];
+	auxvec[1] = p1[1];
+	auxvec[2] = p2[1];
+	auxvec[3] = p3[1];
+
+	multMatrixVector((float*)m, auxvec, p);
+	y = multvec(vt, p);
+	dy = multvec(dvt, p);
+
+	auxvec[0] = p0[2];
+	auxvec[1] = p1[2];
+	auxvec[2] = p2[2];
+	auxvec[3] = p3[2];
+
+	multMatrixVector((float*)m, auxvec, p);
+	z = multvec(vt, p);
+	dz = multvec(dvt, p);
+
+	pos[0] = x;
+	pos[1] = y;
+	pos[2] = z;
+	deriv[0] = dx;
+	deriv[1] = dy;
+	deriv[2] = dz;
+}
+
+// given  global t, returns the point in the curve
+void getGlobalCatmullRomPoint(float gt, float* pos, float* deriv) {
+
+	float t = gt * POINT_COUNT; // this is the real global t
+	int index = floor(t);  // which segment
+	t = t - index; // where within  the segment
+
+	// indices store the points
+	int indices[4];
+	indices[0] = (index + POINT_COUNT - 1) % POINT_COUNT;
+	indices[1] = (indices[0] + 1) % POINT_COUNT;
+	indices[2] = (indices[1] + 1) % POINT_COUNT;
+	indices[3] = (indices[2] + 1) % POINT_COUNT;
+	if(working==0)
+		getCatmullRomPoint(t, p[indices[0]], p[indices[1]], p[indices[2]], p[indices[3]], pos, deriv);
+	else if(working==1)
+		getCatmullRomPoint(t, p2[indices[0]], p2[indices[1]], p2[indices[2]], p2[indices[3]], pos, deriv);
+	else if (working == 2)
+		getCatmullRomPoint(t, p3[indices[0]], p3[indices[1]], p3[indices[2]], p3[indices[3]], pos, deriv);
+	else if (working == 3)
+		getCatmullRomPoint(t, p4[indices[0]], p4[indices[1]], p4[indices[2]], p4[indices[3]], pos, deriv);
+	else if (working == 4)
+		getCatmullRomPoint(t, p5[indices[0]], p5[indices[1]], p5[indices[2]], p5[indices[3]], pos, deriv);
+}
+
+void renderCatmullRomCurve() {
+	glPushMatrix();
+	if(working==0)
+		glTranslatef(-1, -5, 0);
+	else if(working==1)
+		glTranslatef(1, -5, 0);
+	else if (working == 2)
+		glTranslatef(-1.2, 0, 0);
+	else if (working == 3)
+		glTranslatef(1.2, 0, 0);
+	else if (working == 4)
+		glTranslatef(0, 4.5, 0);
+	// draw curve using line segments with GL_LINE_LOOP
+	float pos[3], der[3];
+	float t;
+	int size = 100;
+	glBegin(GL_LINE_LOOP);
+
+	for (int i = 0; i < size; i++)
+	{
+		t = (1.0 / (float)size) * (float)i;
+		getGlobalCatmullRomPoint(t, pos, der);
+		glVertex3f(pos[0], pos[1], pos[2]);
+
+	}
+	glEnd();
+	glPopMatrix();
+}
+
+void cross_main(float* a, float* b, float* res) {
+
+	res[0] = a[1] * b[2] - a[2] * b[1];
+	res[1] = a[2] * b[0] - a[0] * b[2];
+	res[2] = a[0] * b[1] - a[1] * b[0];
+}
+
+void normalize_main(float* a) {
+
+	float l = sqrt(a[0] * a[0] + a[1] * a[1] + a[2] * a[2]);
+	a[0] = a[0] / l;
+	a[1] = a[1] / l;
+	a[2] = a[2] / l;
+}
+
+void buildRotMatrix_main(float* x, float* y, float* z, float* m) {
+
+	m[0] = x[0]; m[1] = x[1]; m[2] = x[2]; m[3] = 0;
+	m[4] = y[0]; m[5] = y[1]; m[6] = y[2]; m[7] = 0;
+	m[8] = z[0]; m[9] = z[1]; m[10] = z[2]; m[11] = 0;
+	m[12] = 0; m[13] = 0; m[14] = 0; m[15] = 1;
+}
+
+
 void renderScene(void) {
+	static float t = 0;
+	float pos[3], der[3];
+	float m[4][4];
+
 	static float size = 1.5;
 	static bool grow = true;
 	static float speed = 0.01;
@@ -245,11 +421,101 @@ void renderScene(void) {
 	glPopMatrix();
 
 	glColor3f(0.0f, 0.0f, 1.0f);
+	//carmull
+	working = 0;
+	{
+		glPushMatrix();
+		//renderCatmullRomCurve();
+		getGlobalCatmullRomPoint(t, pos, der);
 
-	//up->draw();
+		glTranslatef(pos[0], pos[1], pos[2]);
+
+		
+
+		targets[3]->target[0] = pos[0] - 1;
+		targets[3]->target[1] = pos[1] - 5;
+		targets[3]->target[2] = pos[2];
+
+		glPopMatrix();
+	}
+	working = 1;
+	{
+		glPushMatrix();
+		//renderCatmullRomCurve();
+		getGlobalCatmullRomPoint(t, pos, der);
+
+		glTranslatef(pos[0], pos[1], pos[2]);
+
+
+		targets[4]->target[0] = pos[0] + 1;
+		targets[4]->target[1] = pos[1] - 5;
+		targets[4]->target[2] = pos[2];
+
+		glPopMatrix();
+	}
+	working = 2;
+	{
+		glPushMatrix();
+		//renderCatmullRomCurve();
+		getGlobalCatmullRomPoint(t, pos, der);
+
+		glTranslatef(pos[0], pos[1], pos[2]);
+
+
+		targets[1]->target[0] = pos[0] - 1.2;
+		targets[1]->target[1] = pos[1] ;
+		targets[1]->target[2] = pos[2];
+
+		glPopMatrix();
+	}
+	working = 3;
+	{
+		glPushMatrix();
+		//renderCatmullRomCurve();
+		getGlobalCatmullRomPoint(t, pos, der);
+
+		glTranslatef(pos[0], pos[1], pos[2]);
+
+
+		targets[2]->target[0] = pos[0] + 1.2;
+		targets[2]->target[1] = pos[1] ;
+		targets[2]->target[2] = pos[2];
+
+		glPopMatrix();
+	}
+	working = 4;
+
+	/*
+	{
+		glPushMatrix();
+		//renderCatmullRomCurve();
+		getGlobalCatmullRomPoint(t, pos, der);
+
+		glTranslatef(pos[0], pos[1], pos[2]);
+
+
+		targets[0]->target[0] = pos[0] ;
+		targets[0]->target[1] = pos[1]+4.5;
+		targets[0]->target[2] = pos[2];
+
+		glPopMatrix();
+	}
+	*/
+	time = glutGet(GLUT_ELAPSED_TIME);
+	if (time - timebase > 10) {
+		t -= stepT / length_main(der);
+		timebase = time;
+	}
+	if (t < 0) {
+		
+		t = 1;
+	}
+	//-----------catmull
+	
+	up->draw();
 	down->draw();
 	
-	//up->multiUpdate(targets);
+	up->multiUpdate(targets);
 	down->multiUpdate(targets);
    
 	drawAxis();
@@ -257,7 +523,6 @@ void renderScene(void) {
 	// End of frame
 	glutSwapBuffers();
 }
-
 
 int main(int argc, char** argv) {
 
@@ -273,11 +538,11 @@ int main(int argc, char** argv) {
 	float up3[3] = { 0,4,0 };
 	float up4[3] = { 0,4.5,0 };
 	float up5[3] = { -1,3,0 };
-	float up6[3] = { -2,1.5,0 };
-	float up7[3] = { -2,-1,0 };
+	float up6[3] = { -1.2,1,0 };
+	float up7[3] = { -1.2,-1,0 };
 	float up8[3] = { 1,3,0 };
-	float up9[3] = { 2,1.5,0 };
-	float up10[3] = { 2,-1,0 };
+	float up9[3] = { 1.2,1,0 };
+	float up10[3] = { 1.2,-1,0 };
 	float up11[3] = { 0,4.5,1 };
 	
 
@@ -289,27 +554,6 @@ int main(int argc, char** argv) {
 	float down6[3] = { 1,-4,0 };
 	float down7[3] = { 1,-6,0 };
 
-	float angle_vector_null[3] = { 0,0,0 };
-
-	
-	//Parte superior
-	up = new skeleton(start, up1,0.1, angle_vector_null, 0.1, angle_vector_null,false,false);
-	//Tronco
-	up->addChildren(up2, 1.58, angle_vector_null, 1.58, angle_vector_null, false, false);
-	//Cabeça
-	up->children.at(0)->addChildren(up3, 1.58, angle_vector_null, 1.58, angle_vector_null, false, false);
-	up->children.at(0)->children.at(0)->addChildren(up4, 1.58, angle_vector_null, 1.58, angle_vector_null, false, false);
-	up->children.at(0)->children.at(0)->children.at(0)->addChildren(up11, 1.58, angle_vector_null, 1.58, angle_vector_null, false, false);
-	//braço 1
-	up->children.at(0)->addChildren(up5, 1.58, angle_vector_null, 1.58, angle_vector_null, false, false);
-	float angle_bracos[3] = { 0,0,-1 };
-	up->children.at(0)->children.at(1)->addChildren(up6, 1.58, angle_vector_null, 1.58, angle_vector_null, false, false);
-	up->children.at(0)->children.at(1)->children.at(0)->addChildren(up7, 1.58, angle_vector_null, 1.58, angle_vector_null, false, false);
-	//braço 2
-	up->children.at(0)->addChildren(up8, 1.58, angle_vector_null, 1.58, angle_vector_null, false, false);
-	up->children.at(0)->children.at(2)->addChildren(up9, 1.58, angle_vector_null, 1.58, angle_vector_null, false, false);
-	up->children.at(0)->children.at(2)->children.at(0)->addChildren(up10, 1.58, angle_vector_null, 1.58, angle_vector_null, false, false);
-	
 	//Parte inferior
 	float angle_pernas_down[3] = { 0,-1,0 };
 	float angle_pernas_up[3] = { 0,1,0 };
@@ -318,7 +562,27 @@ int main(int argc, char** argv) {
 	float angle_pernas_front[3] = { 0,0,1 };
 	float angle_pernas_back[3] = { 0,0,-1 };
 
-	down = new skeleton(start, down1, 0.2, angle_pernas_up, 0.2, angle_pernas_down, true, true);
+	float angle_vector_null[3] = { 0,0,0 };
+
+	
+	//Parte superior
+	up = new skeleton(start, up1,0.01, angle_pernas_down, 0.01, angle_pernas_up,true,true);
+	//Tronco
+	up->addChildren(up2, 0.1, angle_pernas_down, 0.1, angle_pernas_up, true, true);
+	//Cabeça
+	up->children.at(0)->addChildren(up3, 0.1, angle_pernas_down, 0.1, angle_pernas_up, true, true);
+	up->children.at(0)->children.at(0)->addChildren(up4, 0.4, angle_pernas_down, 0.4, angle_pernas_up, true, true);
+	up->children.at(0)->children.at(0)->children.at(0)->addChildren(up11, 1.58, angle_pernas_back, 1.58, angle_pernas_front, true, true);
+	//braço 1
+	up->children.at(0)->addChildren(up5, 0.01, angle_pernas_right, 0.2, angle_pernas_left, true, true);
+	up->children.at(0)->children.at(1)->addChildren(up6, 1.58, angle_pernas_front, 1.58, angle_pernas_back, false, false);
+	up->children.at(0)->children.at(1)->children.at(0)->addChildren(up7, 1.58, angle_pernas_back, 1.58, angle_pernas_front, false, false);
+	//braço 2
+	up->children.at(0)->addChildren(up8, 0.2, angle_pernas_left, 0.2, angle_pernas_right, true, true);
+	up->children.at(0)->children.at(2)->addChildren(up9, 1.58, angle_pernas_front, 1.58, angle_pernas_back, false, false);
+	up->children.at(0)->children.at(2)->children.at(0)->addChildren(up10, 1.58, angle_pernas_back, 1.58, angle_pernas_front, false, false);
+
+	down = new skeleton(start, down1, 0.05, angle_pernas_up, 0.05, angle_pernas_down, true, true);
 	//Perna 1
 
 	down->addChildren(down2, 0.01, angle_pernas_right, 0.01, angle_pernas_left, true, true);
@@ -331,8 +595,8 @@ int main(int argc, char** argv) {
 
 	//Targets
 	up->children.at(0)->children.at(0)->children.at(0)->children.at(0)->setTarget(0, 4.5, 1);//Cabeça
-	up->children.at(0)->children.at(1)->children.at(0)->children.at(0)->setTarget(-2, -1, 0);//Braço 1
-	up->children.at(0)->children.at(2)->children.at(0)->children.at(0)->setTarget(2, -1, 0);//Braço 2
+	up->children.at(0)->children.at(1)->children.at(0)->children.at(0)->setTarget(-1.2, -1, 0);//Braço 1
+	up->children.at(0)->children.at(2)->children.at(0)->children.at(0)->setTarget(1.2, -1, 0);//Braço 2
 
 	down->children.at(0)->children.at(0)->children.at(0)->setTarget(-1, -6, 0);
 	down->children.at(1)->children.at(0)->children.at(0)->setTarget(1, -6, 0);

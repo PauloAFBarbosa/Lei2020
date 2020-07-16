@@ -8,6 +8,9 @@ bool inwards = true;
 bool outwards = true;
 bool restrictions = true;
 
+float obj_center_global[3];
+float obj_size_global;
+
 void skeleton::changeinwards() {
 	inwards = !inwards;
 }
@@ -278,10 +281,6 @@ void skeleton::update(float target[3], float* return_effector) {
 }
 
 
-void skeleton::applyRestrictions(float firstVecX, float firstVecY, float firstVecZ) {
-
-}
-
 void skeleton::rotate(float original[3],float from[3], float to[3],float angle ,float res[3]) {
 	
 	glm::dvec3 v(original[0], original[1], original[2]);
@@ -310,6 +309,90 @@ void skeleton::rotate(float original[3],float from[3], float to[3],float angle ,
 	}
 	
 
+	
+}
+
+void skeleton::restrictions_in(float vector[3], std::vector<skeleton*> chain, int i, std::vector<float> * positions) {
+	
+		//Vai ver se o ponto esta dentro ou fora do cone
+		float point[3];
+
+		point[0] = chain.at(i)->me->start[0];
+		point[1] = chain.at(i)->me->start[1];
+		point[2] = chain.at(i)->me->start[2];
+
+		float original_point[3];
+		original_point[0] = chain.at(i)->me->end[0];
+		original_point[1] = chain.at(i)->me->end[1];
+		original_point[2] = chain.at(i)->me->end[2];
+
+		float angle = chain.at(i)->me->angle_in;
+
+		float vector_teste[3];
+		vector_teste[0] = point[0] - original_point[0];
+		vector_teste[1] = point[1] - original_point[1];
+		vector_teste[2] = point[2] - original_point[2];
+
+		normalize_skel(vector_teste);
+
+		float dot = vector[0] * vector_teste[0] + vector[1] * vector_teste[1] + vector[2] * vector_teste[2];
+		//dot = (dot < -1.0 ? -1.0 : (dot > 1.0 ? 1.0 : dot));
+		float acos = acosf(dot);
+
+		//printf("Acos %f \n", acos);
+		//0,78 sao 45 graus, se tiver maior que 45 graus esta fora e vai ter de fazer alguma coisa
+		if (acos > angle) {
+
+
+			float resultado[3];
+
+			rotate(vector, vector, vector_teste, angle, resultado);
+
+			normalize_skel(resultado);
+
+			double dist;
+			dist = chain.at(i)->me->size;
+
+			resultado[0] = resultado[0] * dist + original_point[0];
+			resultado[1] = resultado[1] * dist + original_point[1];
+			resultado[2] = resultado[2] * dist + original_point[2];
+
+			chain.at(i)->me->start[0] = resultado[0];
+			chain.at(i)->me->start[1] = resultado[1];
+			chain.at(i)->me->start[2] = resultado[2];
+			if (i != 0) {
+				chain.at(i - 1)->me->end[0] = resultado[0];
+				chain.at(i - 1)->me->end[1] = resultado[1];
+				chain.at(i - 1)->me->end[2] = resultado[2];
+			}
+		}
+
+		//preparar o vetor para a prox iteração
+		//nao precisa fazer nada no ultimo
+
+
+
+		if (chain.at(i)->me->angle_vector_in[0] == 0 && chain.at(i)->me->angle_vector_in[1] == 0 && chain.at(i)->me->angle_vector_in[2] == 0) {
+			vector[0] = chain.at(i)->me->start[0] - chain.at(i)->me->end[0];
+			vector[1] = chain.at(i)->me->start[1] - chain.at(i)->me->end[1];
+			vector[2] = chain.at(i)->me->start[2] - chain.at(i)->me->end[2];
+		}
+		else {
+			// este if esta aqui para ele nao tentar preparar o vector na ultima iteração --- se nao da erro
+			if (i > 0) {
+				vector[0] = chain.at(i - 1)->me->angle_vector_in[0];
+				vector[1] = chain.at(i - 1)->me->angle_vector_in[1];
+				vector[2] = chain.at(i - 1)->me->angle_vector_in[2];
+			}
+		}
+		normalize_skel(vector);
+
+		//so posso adicionar aqui à lista porque tenho de esperar que as correções sejam feitas pelas restrições
+		if (i == 0) {
+			positions->push_back(chain.at(i)->me->start[0]);
+			positions->push_back(chain.at(i)->me->start[1]);
+			positions->push_back(chain.at(i)->me->start[2]);
+		}
 	
 }
 
@@ -346,7 +429,7 @@ bool skeleton::multiUpdateIn(float* originalX, float* originalY, float* original
 			//Forward
 			int i = chain.size() - 1;
 			skeleton* recover = chain.at(i);
-
+			
 			chain.at(i)->me->end[0] = (*target)[0];
 			chain.at(i)->me->end[1] = (*target)[1];
 			chain.at(i)->me->end[2] = (*target)[2];
@@ -379,7 +462,93 @@ bool skeleton::multiUpdateIn(float* originalX, float* originalY, float* original
 				temp1 = (1 - y) * chain.at(i)->me->end[0] + y * chain.at(i)->me->start[0];
 				temp2 = (1 - y) * chain.at(i)->me->end[1] + y * chain.at(i)->me->start[1];
 				temp3 = (1 - y) * chain.at(i)->me->end[2] + y * chain.at(i)->me->start[2];
+				//printf("temps %f %f %f\n", temp1, temp2, temp3);
+				//attraction
+				/*
+				{
+					float attraction[3] = {-50,0,0 };
+					float vector_point_attraction[3], vector_point_newPoint[3] = {0,0,0};
+					
+					vector_point_attraction[0] = attraction[0] - chain.at(i)->me->end[0];
+					vector_point_attraction[1] = attraction[1] - chain.at(i)->me->end[1];
+					vector_point_attraction[2] = attraction[2] - chain.at(i)->me->end[2];
+					normalize_skel(vector_point_attraction);
+					//printf("111111111 atraction %f %f %f\n", attraction[0], attraction[1], attraction[2]);
+					//printf("111111111 chain %f %f %f\n", chain.at(i)->me->start[0], chain.at(i)->me->start[1], chain.at(i)->me->start[2]);
+					//printf("111111111 vector_point_attraction %f %f %f\n", vector_point_attraction[0], vector_point_attraction[1], vector_point_attraction[2]);
+					vector_point_newPoint[0] = temp1 - chain.at(i)->me->end[0];
+					vector_point_newPoint[1] = temp2 - chain.at(i)->me->end[1];
+					vector_point_newPoint[2] = temp3 - chain.at(i)->me->end[2];
 
+					normalize_skel(vector_point_newPoint);
+					//printf("temps %f %f %f\n", temp1, temp2, temp3);
+					//printf("111111111 Vector point newpoint %f %f %f\n", vector_point_newPoint[0], vector_point_newPoint[1], vector_point_newPoint[2]);
+
+					float vector_point_newPoint_not_project[3];
+					vector_point_newPoint_not_project[0] = vector_point_newPoint[0];
+					vector_point_newPoint_not_project[1] = vector_point_newPoint[1];
+					vector_point_newPoint_not_project[2] = vector_point_newPoint[2];
+
+					normalize_skel(vector_point_newPoint);
+
+					float normal[3];
+					if (!isnan(vector_point_newPoint[0])) {
+						//printf("->Entrou \n");
+						normal[0] = chain.at(i )->me->start[0] - chain.at(i )->me->end[0];
+						normal[1] = chain.at(i )->me->start[1] - chain.at(i )->me->end[1];
+						normal[2] = chain.at(i )->me->start[2] - chain.at(i )->me->end[2];
+
+						normalize_skel(normal);
+
+						//project vectors to the plane chain.at(i + 1)->me->start[0] com o vector normal
+						float dist_1 = vector_point_attraction[0] * normal[0] + vector_point_attraction[1] * normal[1] + vector_point_attraction[2] * normal[2];
+						float dist_2 = vector_point_newPoint[0] * normal[0] + vector_point_newPoint[1] * normal[1] + vector_point_newPoint[2] * normal[2];
+
+						float mult = 1; //usado para fazer vector*1 ou vector *-1 
+
+						if (dist_1 < 1)
+							mult = -1;
+						else
+							mult = 1;
+						vector_point_attraction[0] = vector_point_attraction[0] - dist_1 * normal[0] * mult;
+						vector_point_attraction[1] = vector_point_attraction[1] - dist_1 * normal[1] * mult;
+						vector_point_attraction[2] = vector_point_attraction[2] - dist_1 * normal[2] * mult;
+
+						normalize_skel(vector_point_attraction);
+
+						if (dist_2 < 1)
+							mult = -1;
+						else
+							mult = 1;
+
+						vector_point_newPoint[0] = vector_point_newPoint[0] - dist_2 * normal[0] * mult;
+						vector_point_newPoint[1] = vector_point_newPoint[1] - dist_2 * normal[1] * mult;
+						vector_point_newPoint[2] = vector_point_newPoint[2] - dist_2 * normal[2] * mult;
+
+						normalize_skel(vector_point_newPoint);
+						//printf("Vector point newpoint %f %f %f\n", vector_point_newPoint[0], vector_point_newPoint[1], vector_point_newPoint[2]);
+						//find angle
+						float dot = vector_point_newPoint[0] * vector_point_attraction[0] + vector_point_newPoint[1] * vector_point_attraction[1] + vector_point_newPoint[2] * vector_point_attraction[2];
+						float acos = acosf(dot);
+						
+						float res[3];
+						//vai rodar o vector point_newpoint para ficar na "direção" do attraction
+						rotate(vector_point_newPoint_not_project, vector_point_newPoint, vector_point_attraction, acos, res);
+						
+						float temp_point[3] = {temp1,temp2,temp3};
+						float distance_newpoint = distance(chain.at(i)->me->end, temp_point);
+						
+						
+						
+						temp1 = chain.at(i)->me->end[0] + res[0] * distance_newpoint;
+						temp2 = chain.at(i)->me->end[1] + res[1] * distance_newpoint;
+						temp3 = chain.at(i)->me->end[2] + res[2] * distance_newpoint;
+						//printf("Dot %f\n", dot);
+						//printf("acos %f\n", acos);
+						//printf("temp %f %f %f\n", temp1, temp2, temp3);
+					}
+				}
+				*/
 				chain.at(i)->me->start[0] = temp1;
 				chain.at(i)->me->start[1] = temp2;
 				chain.at(i)->me->start[2] = temp3;
@@ -399,7 +568,9 @@ bool skeleton::multiUpdateIn(float* originalX, float* originalY, float* original
 				//vai verificar se o chain.at(i).start esta no sitio certo
 				//vector[3] é o vetor que esta no centro do cone
 				
+				restrictions_in(vector, chain, i, &positions);
 				
+				/*
 				if (i <= chain.size() - 1) {
 					//Vai ver se o ponto esta dentro ou fora do cone
 					float point[3];
@@ -481,6 +652,7 @@ bool skeleton::multiUpdateIn(float* originalX, float* originalY, float* original
 						positions.push_back(chain.at(i)->me->start[2]);
 					}
 				}
+				*/
 				//------restrições
 				
 			}
@@ -594,8 +766,9 @@ bool skeleton::multiUpdateIn(float* originalX, float* originalY, float* original
 			chain.at(i - 1)->me->end[1] = temp2;
 			chain.at(i - 1)->me->end[2] = temp3;
 		}
-
-		
+		std::vector<float> does_nothing;
+		restrictions_in(vector, chain, i, &does_nothing);
+		/*
 		if (i <= chain.size() - 1) {
 			//Vai ver se o ponto esta dentro ou fora do cone
 			float point[3];
@@ -670,8 +843,120 @@ bool skeleton::multiUpdateIn(float* originalX, float* originalY, float* original
 				normalize_skel(vector);
 			}
 		}
+		*/
 	}
 	return true;
+}
+
+void skeleton::checkColision(std::vector<skeleton*> chain,int i) {
+	float dist_center_bone = sqrtf(powf((obj_center_global[0] - chain.at(i)->me->end[0]), 2) + powf((obj_center_global[1] - chain.at(i)->me->end[1]), 2) + powf((obj_center_global[2] - chain.at(i)->me->end[2]), 2));
+	if (dist_center_bone < obj_size_global) {
+		
+		float vector_center_bone[3];
+
+		vector_center_bone[0] = chain.at(i)->me->end[0] - obj_center_global[0];
+		vector_center_bone[1] = chain.at(i)->me->end[1] - obj_center_global[1];
+		vector_center_bone[2] = chain.at(i)->me->end[2] - obj_center_global[2];
+
+		normalize_skel(vector_center_bone);
+		//calcular o ponto mais prox na superficie da esfera
+
+		float point[3];
+		point[0] = obj_center_global[0] + vector_center_bone[0] * obj_size_global;
+		point[1] = obj_center_global[1] + vector_center_bone[1] * obj_size_global;
+		point[2] = obj_center_global[2] + vector_center_bone[2] * obj_size_global;
+
+		//vetor que vai do ultimo osso estavel ate a posição na superfice da esfera
+		float stable_bone_sphere[3];
+		stable_bone_sphere[0] = point[0] - chain.at(i)->me->start[0];
+		stable_bone_sphere[1] = point[1] - chain.at(i)->me->start[1];
+		stable_bone_sphere[2] = point[2] - chain.at(i)->me->start[2];
+		normalize_skel(stable_bone_sphere);
+		//com esse novo vetor vai calcular a nova posição para o osso respeitando o size do osso
+
+		chain.at(i)->me->end[0] = chain.at(i)->me->start[0] + stable_bone_sphere[0] * chain.at(i)->me->size;
+		chain.at(i)->me->end[1] = chain.at(i)->me->start[1] + stable_bone_sphere[1] * chain.at(i)->me->size;
+		chain.at(i)->me->end[2] = chain.at(i)->me->start[2] + stable_bone_sphere[2] * chain.at(i)->me->size;
+
+		if (i < chain.size() - 1) {
+			chain.at(i + 1)->me->start[0] = chain.at(i)->me->end[0];
+			chain.at(i+1)->me->start[1] = chain.at(i)->me->end[1];
+			chain.at(i+1)->me->start[2] = chain.at(i)->me->end[2];
+		}
+
+	}
+}
+
+void skeleton::restrictions_out(float vector[3], std::vector<skeleton*> chain,int i) {
+	
+		float point[3];
+
+		point[0] = chain.at(i)->me->end[0];
+		point[1] = chain.at(i)->me->end[1];
+		point[2] = chain.at(i)->me->end[2];
+
+		float original_point[3];
+		original_point[0] = chain.at(i)->me->start[0];
+		original_point[1] = chain.at(i)->me->start[1];
+		original_point[2] = chain.at(i)->me->start[2];
+
+		float angle = chain.at(i)->me->angle_out;
+
+		float vector_teste[3];
+		vector_teste[0] = point[0] - original_point[0];
+		vector_teste[1] = point[1] - original_point[1];
+		vector_teste[2] = point[2] - original_point[2];
+
+		normalize_skel(vector_teste);
+
+		float dot = vector[0] * vector_teste[0] + vector[1] * vector_teste[1] + vector[2] * vector_teste[2];
+
+		float acos = acosf(dot);
+
+		//printf("Acos %f \n", acos);
+		//0,78 sao 45 graus, se tiver maior que 45 graus esta fora e vai ter de fazer alguma coisa
+		if (acos > angle) {
+
+			float resultado[3];
+			rotate(vector, vector, vector_teste, angle, resultado);
+
+			normalize_skel(resultado);
+
+			double dist;
+			dist = chain.at(i)->me->size;
+
+			resultado[0] = resultado[0] * dist + original_point[0];
+			resultado[1] = resultado[1] * dist + original_point[1];
+			resultado[2] = resultado[2] * dist + original_point[2];
+
+			chain.at(i)->me->end[0] = resultado[0];
+			chain.at(i)->me->end[1] = resultado[1];
+			chain.at(i)->me->end[2] = resultado[2];
+
+			if (i < chain.size() - 1) {
+				chain.at(i + 1)->me->start[0] = resultado[0];
+				chain.at(i + 1)->me->start[1] = resultado[1];
+				chain.at(i + 1)->me->start[2] = resultado[2];
+			}
+
+		}
+
+
+
+		if (chain.at(i)->me->angle_vector_out[0] == 0 && chain.at(i)->me->angle_vector_out[1] == 0 && chain.at(i)->me->angle_vector_out[2] == 0) {
+			vector[0] = chain.at(i)->me->end[0] - chain.at(i)->me->start[0];
+			vector[1] = chain.at(i)->me->end[1] - chain.at(i)->me->start[1];
+			vector[2] = chain.at(i)->me->end[2] - chain.at(i)->me->start[2];
+		}
+		else {
+			if (i < chain.size() - 1) {
+
+				vector[0] = chain.at(i + 1)->me->angle_vector_out[0];
+				vector[1] = chain.at(i + 1)->me->angle_vector_out[1];
+				vector[2] = chain.at(i + 1)->me->angle_vector_out[2];
+			}
+		}
+		normalize_skel(vector);
 }
 
 void skeleton::multiUpdateOut(float originalX, float originalY, float originalZ) {
@@ -725,77 +1010,12 @@ void skeleton::multiUpdateOut(float originalX, float originalY, float originalZ)
 			chain_root.at(i + 1)->me->start[2] = temp3;
 		}
 		
+		//restrições
+		restrictions_out(vector, chain_root, i);
 		
-		if (i>=0) {
-			float point[3];
+		//vai verificar se o ponto esta dentro do objecto
+		checkColision(chain_root,i);
 
-			point[0] = chain_root.at(i)->me->end[0];
-			point[1] = chain_root.at(i)->me->end[1];
-			point[2] = chain_root.at(i)->me->end[2];
-
-			float original_point[3];
-			original_point[0] = chain_root.at(i)->me->start[0];
-			original_point[1] = chain_root.at(i)->me->start[1];
-			original_point[2] = chain_root.at(i)->me->start[2];
-
-			float angle = chain_root.at(i)->me->angle_out;
-
-			float vector_teste[3];
-			vector_teste[0] = point[0] - original_point[0];
-			vector_teste[1] = point[1] - original_point[1];
-			vector_teste[2] = point[2] - original_point[2];
-
-			normalize_skel(vector_teste);
-
-			float dot = vector[0] * vector_teste[0] + vector[1] * vector_teste[1] + vector[2] * vector_teste[2];
-
-			float acos = acosf(dot);
-
-			//printf("Acos %f \n", acos);
-			//0,78 sao 45 graus, se tiver maior que 45 graus esta fora e vai ter de fazer alguma coisa
-			if (acos > angle) {
-				
-				float resultado[3];
-				rotate(vector, vector, vector_teste, angle, resultado);
-
-				normalize_skel(resultado);
-
-				double dist;
-				dist = chain_root.at(i)->me->size;
-
-				resultado[0] = resultado[0] * dist + original_point[0];
-				resultado[1] = resultado[1] * dist + original_point[1];
-				resultado[2] = resultado[2] * dist + original_point[2];
-
-				chain_root.at(i)->me->end[0] = resultado[0];
-				chain_root.at(i)->me->end[1] = resultado[1];
-				chain_root.at(i)->me->end[2] = resultado[2];
-
-				if (i < chain_root.size() - 1) {
-					chain_root.at(i + 1)->me->start[0] = resultado[0];
-					chain_root.at(i + 1)->me->start[1] = resultado[1];
-					chain_root.at(i + 1)->me->start[2] = resultado[2];
-				}
-				
-			}
-			
-			
-
-			if (chain_root.at(i)->me->angle_vector_out[0] == 0 && chain_root.at(i)->me->angle_vector_out[1] == 0 && chain_root.at(i)->me->angle_vector_out[2] == 0) {
-				vector[0] = chain_root.at(i)->me->end[0] - chain_root.at(i)->me->start[0];
-				vector[1] = chain_root.at(i)->me->end[1] - chain_root.at(i)->me->start[1];
-				vector[2] = chain_root.at(i)->me->end[2] - chain_root.at(i)->me->start[2];
-			}
-			else {
-				if (i < chain_root.size() - 1) {
-					
-					vector[0] = chain_root.at(i + 1)->me->angle_vector_out[0];
-					vector[1] = chain_root.at(i + 1)->me->angle_vector_out[1];
-					vector[2] = chain_root.at(i + 1)->me->angle_vector_out[2];
-				}
-			}
-			normalize_skel(vector);
-		}
 		//update_vec
 		update_vec(chain_root.at(i)->me);
 	}
@@ -848,6 +1068,93 @@ void skeleton::multiUpdateOut(float originalX, float originalY, float originalZ)
 				temp2 = (1 - y) * chain_2.at(i)->me->start[1] + y * chain_2.at(i)->me->end[1];
 				temp3 = (1 - y) * chain_2.at(i)->me->start[2] + y * chain_2.at(i)->me->end[2];
 
+				//attraction
+				/*
+				{
+					float attraction[3] = { 50,0,0 };
+					float vector_point_attraction[3], vector_point_newPoint[3] = { 0,0,0 };
+
+					vector_point_attraction[0] = attraction[0] - chain_2.at(i)->me->start[0];
+					vector_point_attraction[1] = attraction[1] - chain_2.at(i)->me->start[1];
+					vector_point_attraction[2] = attraction[2] - chain_2.at(i)->me->start[2];
+					normalize_skel(vector_point_attraction);
+					//printf("111111111 atraction %f %f %f\n", attraction[0], attraction[1], attraction[2]);
+					//printf("111111111 chain %f %f %f\n", chain.at(i)->me->start[0], chain.at(i)->me->start[1], chain.at(i)->me->start[2]);
+					//printf("111111111 vector_point_attraction %f %f %f\n", vector_point_attraction[0], vector_point_attraction[1], vector_point_attraction[2]);
+					vector_point_newPoint[0] = temp1 - chain_2.at(i)->me->start[0];
+					vector_point_newPoint[1] = temp2 - chain_2.at(i)->me->start[1];
+					vector_point_newPoint[2] = temp3 - chain_2.at(i)->me->start[2];
+
+					normalize_skel(vector_point_newPoint);
+					//printf("temps %f %f %f\n", temp1, temp2, temp3);
+					//printf("111111111 Vector point newpoint %f %f %f\n", vector_point_newPoint[0], vector_point_newPoint[1], vector_point_newPoint[2]);
+
+					float vector_point_newPoint_not_project[3];
+					vector_point_newPoint_not_project[0] = vector_point_newPoint[0];
+					vector_point_newPoint_not_project[1] = vector_point_newPoint[1];
+					vector_point_newPoint_not_project[2] = vector_point_newPoint[2];
+
+					normalize_skel(vector_point_newPoint);
+
+					float normal[3];
+					if (!isnan(vector_point_newPoint[0])) {
+						//printf("->Entrou \n");
+						normal[0] = chain_2.at(i)->me->end[0] - chain_2.at(i)->me->start[0];
+						normal[1] = chain_2.at(i)->me->end[1] - chain_2.at(i)->me->start[1];
+						normal[2] = chain_2.at(i)->me->end[2] - chain_2.at(i)->me->start[2];
+
+						normalize_skel(normal);
+
+						//project vectors to the plane chain.at(i + 1)->me->start[0] com o vector normal
+						float dist_1 = vector_point_attraction[0] * normal[0] + vector_point_attraction[1] * normal[1] + vector_point_attraction[2] * normal[2];
+						float dist_2 = vector_point_newPoint[0] * normal[0] + vector_point_newPoint[1] * normal[1] + vector_point_newPoint[2] * normal[2];
+
+						float mult = 1; //usado para fazer vector*1 ou vector *-1 
+
+						if (dist_1 < 1)
+							mult = 1;
+						else
+							mult = -1;
+						vector_point_attraction[0] = vector_point_attraction[0] - dist_1 * normal[0] * mult;
+						vector_point_attraction[1] = vector_point_attraction[1] - dist_1 * normal[1] * mult;
+						vector_point_attraction[2] = vector_point_attraction[2] - dist_1 * normal[2] * mult;
+
+						normalize_skel(vector_point_attraction);
+
+						if (dist_2 < 1)
+							mult = -1;
+						else
+							mult = 1;
+
+						vector_point_newPoint[0] = vector_point_newPoint[0] - dist_2 * normal[0] * mult;
+						vector_point_newPoint[1] = vector_point_newPoint[1] - dist_2 * normal[1] * mult;
+						vector_point_newPoint[2] = vector_point_newPoint[2] - dist_2 * normal[2] * mult;
+
+						normalize_skel(vector_point_newPoint);
+						//printf("Vector point newpoint %f %f %f\n", vector_point_newPoint[0], vector_point_newPoint[1], vector_point_newPoint[2]);
+						//find angle
+						float dot = vector_point_newPoint[0] * vector_point_attraction[0] + vector_point_newPoint[1] * vector_point_attraction[1] + vector_point_newPoint[2] * vector_point_attraction[2];
+						float acos = acosf(dot);
+
+						float res[3];
+						//vai rodar o vector point_newpoint para ficar na "direção" do attraction
+						rotate(vector_point_newPoint_not_project, vector_point_newPoint, vector_point_attraction, acos, res);
+
+						float temp_point[3] = { temp1,temp2,temp3 };
+						float distance_newpoint = distance(chain_2.at(i)->me->end, temp_point);
+
+
+
+						temp1 = chain_2.at(i)->me->end[0] + res[0] * distance_newpoint;
+						temp2 = chain_2.at(i)->me->end[1] + res[1] * distance_newpoint;
+						temp3 = chain_2.at(i)->me->end[2] + res[2] * distance_newpoint;
+						//printf("Dot %f\n", dot);
+						//printf("acos %f\n", acos);
+						//printf("temp %f %f %f\n", temp1, temp2, temp3);
+					}
+				}
+				*/
+
 				chain_2.at(i)->me->end[0] = temp1;
 				chain_2.at(i)->me->end[1] = temp2;
 				chain_2.at(i)->me->end[2] = temp3;
@@ -858,6 +1165,10 @@ void skeleton::multiUpdateOut(float originalX, float originalY, float originalZ)
 					chain_2.at(i + 1)->me->start[2] = temp3;
 				}
 				
+				
+				restrictions_out(vector, chain_2, i);
+				
+				/*
 				if (i>=0) {
 					float point[3];
 
@@ -931,6 +1242,10 @@ void skeleton::multiUpdateOut(float originalX, float originalY, float originalZ)
 					normalize_skel(vector);
 				
 				}
+				*/
+
+				checkColision(chain_2, i);
+
 				update_vec(chain_2.at(i)->me);
 			}
 			if (chain_2.at(chain_2.size() - 1)->children.size() > 1) {
@@ -940,30 +1255,13 @@ void skeleton::multiUpdateOut(float originalX, float originalY, float originalZ)
 	}
 }
 
-void skeleton::multiUpdate(skeleton* targets[4])
+void skeleton::multiUpdate(skeleton* targets[4],float obj_center[3],float obj_size)
 {	
+	obj_center_global[0]= obj_center[0];
+	obj_center_global[1] = obj_center[1];
+	obj_center_global[2] = obj_center[2];
+	obj_size_global= obj_size;
 	
-	/*
-	float start[3] = {0,0,0};
-	float end[3] = {0,-0.5,-0.5};
-	float in[3] = {0,0,-1};
-	float out[3] = {0,0,1};
-	float res_in[3], res_out[3];
-	
-	
-	Bone* b = new Bone(start, end, 2, in,2, out,false,false);
-
-	b->original_pos[0] = 0;
-	b->original_pos[1] = -1;
-	b->original_pos[2] = 0;
-
-	update_vec(b);
-
-	printf("FORA Res in %f %f %f \n", b->angle_vector_in[0], b->angle_vector_in[1], b->angle_vector_in[2]);
-	printf("FORA Res in %f %f %f \n", b->angle_vector_out[0], b->angle_vector_out[1], b->angle_vector_out[2]);
-
-	
-	*/
 	float originalx, originaly, originalz;
 	for (int k = 0; k < 1; k++) {
 

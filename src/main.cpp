@@ -29,6 +29,9 @@ int working = 0;
 
 float oldy[4] = { 1,0,0,0 };
 
+float obj_center[3] = { 0,-4,0 };
+float obj_size = 2;
+
 int time;
 int timebase;
 int maxTime = 10000;
@@ -384,7 +387,7 @@ void renderScene(void) {
 	if (controlling == 0)
 		glColor3f(1.0f, 0.0f, 0.0f);
 	glTranslatef(targets[0]->target[0], targets[0]->target[1], targets[0]->target[2]);
-	glutWireSphere(0.5, 10, 10);
+	glutWireSphere(0.5, 5, 5);
 	glColor3f(0.0f, 0.0f, 1.0f);
 	glPopMatrix();
 
@@ -392,7 +395,7 @@ void renderScene(void) {
 	if (controlling == 1)
 		glColor3f(1.0f, 0.0f, 0.0f);
 	glTranslatef(targets[1]->target[0], targets[1]->target[1], targets[1]->target[2]);
-	glutWireSphere(0.5, 10, 10);
+	glutWireSphere(0.5, 5, 5);
 	glColor3f(0.0f, 0.0f, 1.0f);
 	glPopMatrix();
 
@@ -400,7 +403,7 @@ void renderScene(void) {
 	if (controlling == 2)
 		glColor3f(1.0f, 0.0f, 0.0f);
 	glTranslatef(targets[2]->target[0], targets[2]->target[1], targets[2]->target[2]);
-	glutWireSphere(0.5, 10, 10);
+	glutWireSphere(0.5, 5, 5);
 	glColor3f(0.0f, 0.0f, 1.0f);
 	glPopMatrix();
 	
@@ -408,7 +411,7 @@ void renderScene(void) {
 	if (controlling == 3)
 		glColor3f(1.0f, 0.0f, 0.0f);
 	glTranslatef(targets[3]->target[0], targets[3]->target[1], targets[3]->target[2]);
-	glutWireSphere(0.5, 10, 10);
+	glutWireSphere(0.5, 5, 5);
 	glColor3f(0.0f, 0.0f, 1.0f);
 	glPopMatrix();
 
@@ -416,109 +419,126 @@ void renderScene(void) {
 	if (controlling == 4)
 		glColor3f(1.0f, 0.0f, 0.0f);
 	glTranslatef(targets[4]->target[0], targets[4]->target[1], targets[4]->target[2]);
-	glutWireSphere(0.5, 10, 10);
+	glutWireSphere(0.5, 5, 5);
 	glColor3f(0.0f, 0.0f, 1.0f);
 	glPopMatrix();
 
 	glColor3f(0.0f, 0.0f, 1.0f);
-	//carmull
-	working = 0;
-	{
-		glPushMatrix();
-		//renderCatmullRomCurve();
-		getGlobalCatmullRomPoint(t, pos, der);
+	bool controlling = false;
 
-		glTranslatef(pos[0], pos[1], pos[2]);
+	if (controlling == false) {
+		//carmull
+		working = 0;
+		{
+			glPushMatrix();
+			//renderCatmullRomCurve();
+			getGlobalCatmullRomPoint(t, pos, der);
 
-		
+			glTranslatef(pos[0], pos[1], pos[2]);
 
-		targets[3]->target[0] = pos[0] - 1;
-		targets[3]->target[1] = pos[1] - 5;
-		targets[3]->target[2] = pos[2];
 
-		glPopMatrix();
+
+			targets[3]->target[0] = pos[0] - 1;
+			targets[3]->target[1] = pos[1] - 5;
+			targets[3]->target[2] = pos[2];
+
+			glPopMatrix();
+		}
+		working = 1;
+		{
+			glPushMatrix();
+			//renderCatmullRomCurve();
+			getGlobalCatmullRomPoint(t, pos, der);
+
+			glTranslatef(pos[0], pos[1], pos[2]);
+
+
+			targets[4]->target[0] = pos[0] + 1;
+			targets[4]->target[1] = pos[1] - 5;
+			targets[4]->target[2] = pos[2];
+
+			glPopMatrix();
+		}
+		working = 2;
+		{
+			glPushMatrix();
+			//renderCatmullRomCurve();
+			getGlobalCatmullRomPoint(t, pos, der);
+
+			glTranslatef(pos[0], pos[1], pos[2]);
+
+
+			targets[1]->target[0] = pos[0] - 1.2;
+			targets[1]->target[1] = pos[1];
+			targets[1]->target[2] = pos[2];
+
+			glPopMatrix();
+		}
+		working = 3;
+		{
+			glPushMatrix();
+			//renderCatmullRomCurve();
+			getGlobalCatmullRomPoint(t, pos, der);
+
+			glTranslatef(pos[0], pos[1], pos[2]);
+
+
+			targets[2]->target[0] = pos[0] + 1.2;
+			targets[2]->target[1] = pos[1];
+			targets[2]->target[2] = pos[2];
+
+			glPopMatrix();
+		}
+		working = 4;
+
+		/*
+		{
+			glPushMatrix();
+			//renderCatmullRomCurve();
+			getGlobalCatmullRomPoint(t, pos, der);
+
+			glTranslatef(pos[0], pos[1], pos[2]);
+
+
+			targets[0]->target[0] = pos[0] ;
+			targets[0]->target[1] = pos[1]+4.5;
+			targets[0]->target[2] = pos[2];
+
+			glPopMatrix();
+		}
+		*/
+		time = glutGet(GLUT_ELAPSED_TIME);
+		if (time - timebase > 10) {
+			t -= stepT / length_main(der);
+			timebase = time;
+		}
+		if (t < 0) {
+
+			t = 1;
+		}
+		//-----------catmull
 	}
-	working = 1;
-	{
-		glPushMatrix();
-		//renderCatmullRomCurve();
-		getGlobalCatmullRomPoint(t, pos, der);
-
-		glTranslatef(pos[0], pos[1], pos[2]);
-
-
-		targets[4]->target[0] = pos[0] + 1;
-		targets[4]->target[1] = pos[1] - 5;
-		targets[4]->target[2] = pos[2];
-
-		glPopMatrix();
-	}
-	working = 2;
-	{
-		glPushMatrix();
-		//renderCatmullRomCurve();
-		getGlobalCatmullRomPoint(t, pos, der);
-
-		glTranslatef(pos[0], pos[1], pos[2]);
-
-
-		targets[1]->target[0] = pos[0] - 1.2;
-		targets[1]->target[1] = pos[1] ;
-		targets[1]->target[2] = pos[2];
-
-		glPopMatrix();
-	}
-	working = 3;
-	{
-		glPushMatrix();
-		//renderCatmullRomCurve();
-		getGlobalCatmullRomPoint(t, pos, der);
-
-		glTranslatef(pos[0], pos[1], pos[2]);
-
-
-		targets[2]->target[0] = pos[0] + 1.2;
-		targets[2]->target[1] = pos[1] ;
-		targets[2]->target[2] = pos[2];
-
-		glPopMatrix();
-	}
-	working = 4;
-
-	/*
-	{
-		glPushMatrix();
-		//renderCatmullRomCurve();
-		getGlobalCatmullRomPoint(t, pos, der);
-
-		glTranslatef(pos[0], pos[1], pos[2]);
-
-
-		targets[0]->target[0] = pos[0] ;
-		targets[0]->target[1] = pos[1]+4.5;
-		targets[0]->target[2] = pos[2];
-
-		glPopMatrix();
-	}
-	*/
-	time = glutGet(GLUT_ELAPSED_TIME);
-	if (time - timebase > 10) {
-		t -= stepT / length_main(der);
-		timebase = time;
-	}
-	if (t < 0) {
-		
-		t = 1;
-	}
-	//-----------catmull
+	
 	
 	up->draw();
 	down->draw();
 	
-	up->multiUpdate(targets);
-	down->multiUpdate(targets);
+	up->multiUpdate(targets,obj_center,obj_size);
+	down->multiUpdate(targets, obj_center, obj_size);
    
 	drawAxis();
+
+	//draw object
+
+	glPushMatrix();
+	
+	glColor3f(1.0f, 1.0f, 1.0f);
+	glTranslatef(obj_center[0], obj_center[1], obj_center[2]);
+	glutWireSphere(obj_size, 7, 7);
+	glColor3f(0.0f, 0.0f, 1.0f);
+	glPopMatrix();
+
+	glColor3f(0.0f, 0.0f, 1.0f);
 
 	// End of frame
 	glutSwapBuffers();
@@ -575,11 +595,11 @@ int main(int argc, char** argv) {
 	up->children.at(0)->children.at(0)->children.at(0)->addChildren(up11, 1.58, angle_pernas_back, 1.58, angle_pernas_front, true, true);
 	//braço 1
 	up->children.at(0)->addChildren(up5, 0.01, angle_pernas_right, 0.2, angle_pernas_left, true, true);
-	up->children.at(0)->children.at(1)->addChildren(up6, 1.58, angle_pernas_front, 1.58, angle_pernas_back, false, false);
+	up->children.at(0)->children.at(1)->addChildren(up6, 1.80, angle_pernas_front, 1.80, angle_pernas_back, true, true);
 	up->children.at(0)->children.at(1)->children.at(0)->addChildren(up7, 1.58, angle_pernas_back, 1.58, angle_pernas_front, false, false);
 	//braço 2
 	up->children.at(0)->addChildren(up8, 0.2, angle_pernas_left, 0.2, angle_pernas_right, true, true);
-	up->children.at(0)->children.at(2)->addChildren(up9, 1.58, angle_pernas_front, 1.58, angle_pernas_back, false, false);
+	up->children.at(0)->children.at(2)->addChildren(up9, 1.80, angle_pernas_front, 1.80, angle_pernas_back, true, true);
 	up->children.at(0)->children.at(2)->children.at(0)->addChildren(up10, 1.58, angle_pernas_back, 1.58, angle_pernas_front, false, false);
 
 	down = new skeleton(start, down1, 0.05, angle_pernas_up, 0.05, angle_pernas_down, true, true);

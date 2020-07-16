@@ -35,11 +35,15 @@ public:
 
 	void applyRestrictions(float firstVecX, float firstVecY, float firstVecZ);
 	void rotate(float original[3], float from[3], float to[3], float angle, float res[3]);
+	void restrictions_in(float vector[3], std::vector<skeleton*> chain, int i, std::vector<float>* positions);
+	
 	//void rotate(float original[3], float target_vector[3], float angle, float res[3]);
 	bool multiUpdateIn(float* originalX, float* originalY, float* originalZ);
+	void checkColision(std::vector<skeleton*> chain, int i);
+	void restrictions_out(float vector[3], std::vector<skeleton*> chain, int i);
 	void multiUpdateOut(float originalX, float originalY, float originalZ);
 
-	void multiUpdate(skeleton* targets[4]);
+	void multiUpdate(skeleton* targets[4], float obj_center[3],float obj_size);
 
 
 

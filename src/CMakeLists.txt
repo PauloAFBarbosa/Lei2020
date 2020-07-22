@@ -5,7 +5,7 @@ PROJECT(LEI2020)
 
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
-add_executable(${PROJECT_NAME} main.cpp Bone.h Bone.cpp skeleton.h skeleton.cpp)
+add_executable(${PROJECT_NAME} main.cpp Bone.h Bone.cpp Skeleton.h Skeleton.cpp)
 
 find_package(OpenGL REQUIRED)
 include_directories(${OpenGL_INCLUDE_DIRS})

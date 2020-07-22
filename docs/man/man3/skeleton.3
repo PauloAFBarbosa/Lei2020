@@ -1,0 +1,406 @@
+.TH "skeleton" 3 "Wed Jul 22 2020" "Version v0.1" "Lei2020" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+skeleton
+.SH SYNOPSIS
+.br
+.PP
+.SS "Public Member Functions"
+
+.in +1c
+.ti -1c
+.RI "\fBskeleton\fP * \fBcopy\fP ()"
+.br
+.ti -1c
+.RI "void \fBchangeinwards\fP ()"
+.br
+.ti -1c
+.RI "void \fBchangeoutwards\fP ()"
+.br
+.ti -1c
+.RI "void \fBchangerestrictions\fP ()"
+.br
+.ti -1c
+.RI "void \fBaddChildren\fP (float in_end[3], float angle_in, float angle_vector_in[3], float angle_out, float angle_vector_out[3], bool fixed_in, bool fixed_out)"
+.br
+.RI "Adds a new children to skeleton\&. "
+.ti -1c
+.RI "void \fBaddChildren\fP (\fBskeleton\fP *child)"
+.br
+.RI "Adds a new children to skeleton\&. "
+.ti -1c
+.RI "void \fBsetParent\fP (\fBskeleton\fP *s)"
+.br
+.RI "Set s as parent skeleton\&. "
+.ti -1c
+.RI "void \fBdraw\fP ()"
+.br
+.RI "This method draws the skeleton, if vecs is true even draw the vector of each bone\&. "
+.ti -1c
+.RI "void \fBsetTarget\fP (float x, float y, float z)"
+.br
+.RI "Set the target point for the x,y,z coordinates\&. "
+.ti -1c
+.RI "void \fBgetTarget\fP (float *target[3])"
+.br
+.RI "Fill *target with the target coordinates\&. "
+.ti -1c
+.RI "void \fBgetEndPoints\fP (std::vector< \fBskeleton\fP * > *endpoints)"
+.br
+.ti -1c
+.RI "void \fBbackward\fP ()"
+.br
+.ti -1c
+.RI "void \fBforward\fP ()"
+.br
+.ti -1c
+.RI "void \fBupdate_vec\fP (\fBBone\fP *b)"
+.br
+.ti -1c
+.RI "void \fBupdate\fP (float target[3], float *return_effector)"
+.br
+.ti -1c
+.RI "void \fBapplyRestrictions\fP (float firstVecX, float firstVecY, float firstVecZ)"
+.br
+.ti -1c
+.RI "void \fBrotate\fP (float original[3], float from[3], float to[3], float angle, float res[3])"
+.br
+.RI "Rotates a vector associated to a \fBBone\fP\&. "
+.ti -1c
+.RI "void \fBrestrictions_in\fP (float vector[3], std::vector< \fBskeleton\fP * > chain, int i, std::vector< float > *positions)"
+.br
+.RI "Define the restrictions in the in part of the algorithm\&. "
+.ti -1c
+.RI "bool \fBmultiUpdateIn\fP (float *originalX, float *originalY, float *originalZ)"
+.br
+.RI "Does the in part of the Algorithm\&. "
+.ti -1c
+.RI "void \fBcheckColision\fP (std::vector< \fBskeleton\fP * > chain, int i)"
+.br
+.RI "Verifies if a element of a chain is coliding with restrictions\&. "
+.ti -1c
+.RI "void \fBrestrictions_out\fP (float vector[3], std::vector< \fBskeleton\fP * > chain, int i)"
+.br
+.RI "Define the restrictions in the out part of the algorithm\&. "
+.ti -1c
+.RI "void \fBmultiUpdateOut\fP (float originalX, float originalY, float originalZ)"
+.br
+.RI "Does the out part of the Algorithm\&. "
+.ti -1c
+.RI "void \fBmultiUpdate\fP (\fBskeleton\fP *targets[4], float obj_center[3], float obj_size)"
+.br
+.RI "Controls the algorithm, the in and out part\&. "
+.ti -1c
+.RI "void \fBgetSubRoots\fP (std::vector< \fBskeleton\fP * > *subRoots)"
+.br
+.RI "Identifies and puts in subRoots all the chains in a skeleton\&. "
+.ti -1c
+.RI "float \fBdistance\fP (float p1[3], float p2[3])"
+.br
+.RI "Gets the distance between p1 and p1\&. "
+.ti -1c
+.RI "float \fBtotalSize\fP ()"
+.br
+.ti -1c
+.RI "float * \fBgetEndEffector\fP ()"
+.br
+.ti -1c
+.RI "void \fBgetAllSkeleton\fP (std::vector< \fBskeleton\fP * > *ret)"
+.br
+.RI "Gets the chains to use in multiupdatein and multiupdateout\&. "
+.ti -1c
+.RI "\fBskeleton\fP (float in_start[3], float in_end[3], float angle_in, float angle_vector_in[3], float angle_out, float angle_vector_out[3], bool fixed_in, bool fixed_out)"
+.br
+.RI "Construct a new \fBskeleton::skeleton\fP object, all this variables are the same as in the creation of a \fBBone\fP\&. "
+.ti -1c
+.RI "\fB~skeleton\fP ()"
+.br
+.RI "Destroy the \fBskeleton::skeleton\fP object\&. "
+.in -1c
+.SS "Public Attributes"
+
+.in +1c
+.ti -1c
+.RI "std::vector< \fBskeleton\fP * > \fBchildren\fP"
+.br
+.ti -1c
+.RI "float \fBtarget\fP [3]"
+.br
+.ti -1c
+.RI "\fBBone\fP * \fBme\fP"
+.br
+.ti -1c
+.RI "\fBskeleton\fP * \fBparent\fP"
+.br
+.in -1c
+.SH "Constructor & Destructor Documentation"
+.PP 
+.SS "skeleton::skeleton (float in_start[3], float in_end[3], float angle_in, float angle_vector_in[3], float angle_out, float angle_vector_out[3], bool fixed_in, bool fixed_out)"
+
+.PP
+Construct a new \fBskeleton::skeleton\fP object, all this variables are the same as in the creation of a \fBBone\fP\&. 
+.PP
+\fBParameters\fP
+.RS 4
+\fIin_start\fP Array with x,y,z coordinates defining position of start point 
+.br
+\fIin_end\fP Array with x,y,z coordinates defining position of end point 
+.br
+\fIangle_in\fP Limit of movement for the bone, in rad 
+.br
+\fIangle_vector_in\fP Vetor that defines the center of movement fot the bone 
+.br
+\fIangle_out\fP Same as angle_in but for when is doing the out algorith 
+.br
+\fIangle_vector_out\fP Same as angle_vector_in but for doing the out algorith 
+.br
+\fIfixed_in\fP Define if you what that the vetor rotate with the bone or stay the same 
+.br
+\fIfixed_out\fP Same as fixed_in but for doing the out algorithm 
+.RE
+.PP
+
+.SS "skeleton::~skeleton ()"
+
+.PP
+Destroy the \fBskeleton::skeleton\fP object\&. 
+.SH "Member Function Documentation"
+.PP 
+.SS "void skeleton::addChildren (float in_end[3], float angle_in, float angle_vector_in[3], float angle_out, float angle_vector_out[3], bool fixed_in, bool fixed_out)"
+
+.PP
+Adds a new children to skeleton\&. 
+.PP
+\fBParameters\fP
+.RS 4
+\fIin_end\fP Array with x, y, z coordinates defining position of end point 
+.br
+\fIangle_in\fP Limit of movement for the bone, in rad 
+.br
+\fIangle_vector_in\fP Vetor that defines the center of movement fot the bone 
+.br
+\fIangle_out\fP Same as angle_in but for when is doing the out algorith 
+.br
+\fIangle_vector_out\fP Same as angle_vector_in but for doing the out algorith 
+.br
+\fIfixed_in\fP Define if you what that the vetor rotate with the bone or stay the same 
+.br
+\fIfixed_out\fP Same as fixed_in but for doing the out algorithm 
+.RE
+.PP
+
+.SS "void skeleton::addChildren (\fBskeleton\fP * child)"
+
+.PP
+Adds a new children to skeleton\&. 
+.PP
+\fBParameters\fP
+.RS 4
+\fIchild\fP 
+.RE
+.PP
+
+.SS "void skeleton::checkColision (std::vector< \fBskeleton\fP * > chain, int i)"
+
+.PP
+Verifies if a element of a chain is coliding with restrictions\&. 
+.PP
+\fBParameters\fP
+.RS 4
+\fIchain\fP A chain of the skeleton to be checked for colisions 
+.br
+\fIi\fP Identifies the element of the chain to be checked 
+.RE
+.PP
+
+.SS "float skeleton::distance (float p1[3], float p2[3])"
+
+.PP
+Gets the distance between p1 and p1\&. 
+.PP
+\fBParameters\fP
+.RS 4
+\fIp1\fP array with coordinates of point 1 
+.br
+\fIp2\fP array with coordinates of point 2 
+.RE
+.PP
+\fBReturns\fP
+.RS 4
+float distance between point 1 and point 2 
+.RE
+.PP
+
+.SS "void skeleton::draw ()"
+
+.PP
+This method draws the skeleton, if vecs is true even draw the vector of each bone\&. 
+.SS "void skeleton::getAllSkeleton (std::vector< \fBskeleton\fP * > * ret)"
+
+.PP
+Gets the chains to use in multiupdatein and multiupdateout\&. 
+.PP
+\fBParameters\fP
+.RS 4
+\fIret\fP Vector to populate with chains 
+.RE
+.PP
+
+.SS "void skeleton::getSubRoots (std::vector< \fBskeleton\fP * > * subRoots)"
+
+.PP
+Identifies and puts in subRoots all the chains in a skeleton\&. 
+.PP
+\fBParameters\fP
+.RS 4
+\fIsubRoots\fP Vector to populate with the chains 
+.RE
+.PP
+
+.SS "void skeleton::getTarget (float * target[3])"
+
+.PP
+Fill *target with the target coordinates\&. 
+.PP
+\fBParameters\fP
+.RS 4
+\fItarget\fP Array to fill [x,y,z] coordinates 
+.RE
+.PP
+
+.SS "void skeleton::multiUpdate (\fBskeleton\fP * targets[4], float obj_center[3], float obj_size)"
+
+.PP
+Controls the algorithm, the in and out part\&. 
+.PP
+\fBParameters\fP
+.RS 4
+\fItargets\fP 
+.br
+\fIobj_center\fP 
+.br
+\fIobj_size\fP 
+.RE
+.PP
+
+.SS "bool skeleton::multiUpdateIn (float * originalX, float * originalY, float * originalZ)"
+
+.PP
+Does the in part of the Algorithm\&. 
+.PP
+\fBParameters\fP
+.RS 4
+\fIoriginalX\fP 
+.br
+\fIoriginalY\fP 
+.br
+\fIoriginalZ\fP 
+.RE
+.PP
+
+.SS "void skeleton::multiUpdateOut (float originalX, float originalY, float originalZ)"
+
+.PP
+Does the out part of the Algorithm\&. 
+.PP
+\fBParameters\fP
+.RS 4
+\fIoriginalX\fP 
+.br
+\fIoriginalY\fP 
+.br
+\fIoriginalZ\fP 
+.RE
+.PP
+
+.SS "void skeleton::restrictions_in (float vector[3], std::vector< \fBskeleton\fP * > chain, int i, std::vector< float > * positions)"
+
+.PP
+Define the restrictions in the in part of the algorithm\&. 
+.PP
+\fBParameters\fP
+.RS 4
+\fIvector\fP Same angle_vec_in vector as in the creation of \fBBone\fP 
+.br
+\fIchain\fP All parts of the skeleton from the end until a bifurcation or a junction, or between two of this 
+.br
+\fIi\fP Size of the chain -1 
+.br
+\fIpositions\fP Positions to calculate the centroid 
+.RE
+.PP
+
+.SS "void skeleton::restrictions_out (float vector[3], std::vector< \fBskeleton\fP * > chain, int i)"
+
+.PP
+Define the restrictions in the out part of the algorithm\&. 
+.PP
+\fBParameters\fP
+.RS 4
+\fIvector\fP Same angle_vec_out vector as in the creation of \fBBone\fP 
+.br
+\fIchain\fP All parts of the skeleton from the end until a bifurcation or a junction, or between two of this 
+.br
+\fIi\fP Size of the chain -1 
+.RE
+.PP
+
+.SS "void skeleton::rotate (float original[3], float from[3], float to[3], float angle, float res[3])"
+
+.PP
+Rotates a vector associated to a \fBBone\fP\&. 
+.PP
+\fBParameters\fP
+.RS 4
+\fIoriginal\fP Vector components [x,y,z] 
+.br
+\fIfrom\fP Orientation of \fBBone\fP before rotation 
+.br
+\fIto\fP Orientation of \fBBone\fP after rotation 
+.br
+\fIangle\fP Angle of rotation between from and to to rotate (can be smaller or bigger that the angle between them) 
+.br
+\fIres\fP Result of rotation of original components with from, to and angle information 
+.RE
+.PP
+
+.SS "void skeleton::setParent (\fBskeleton\fP * s)"
+
+.PP
+Set s as parent skeleton\&. 
+.PP
+\fBParameters\fP
+.RS 4
+\fIs\fP *skeleton is the parent of this skeleton 
+.RE
+.PP
+
+.SS "void skeleton::setTarget (float x, float y, float z)"
+
+.PP
+Set the target point for the x,y,z coordinates\&. 
+.PP
+\fBParameters\fP
+.RS 4
+\fIx\fP 
+.br
+\fIy\fP 
+.br
+\fIz\fP 
+.RE
+.PP
+
+.SS "void skeleton::update_vec (\fBBone\fP * b)"
+
+.PP
+\fBParameters\fP
+.RS 4
+\fIb\fP 
+.RE
+.PP
+
+
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for Lei2020 from the source code\&.

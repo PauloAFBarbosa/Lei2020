@@ -1,3 +1,14 @@
+/**
+ * @file Skeleton.h
+ * @author Paulo Barbosa, Francisco Lira and Joel Gama
+ * @brief Header for Skeleton class
+ * @version 0.1
+ * @date 2020-07-20
+ *
+ * @copyright Copyright (c) 2020
+ *
+ */
+
 #pragma once
 
 #include "Bone.h"
@@ -14,9 +25,7 @@ public:
 	skeleton* copy();
 
 	void changeinwards();
-
 	void changeoutwards();
-
 	void changerestrictions();
 
 	void addChildren(float in_end[3],float angle_in,float angle_vector_in[3], float angle_out, float angle_vector_out[3], bool fixed_in, bool fixed_out);

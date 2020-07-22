@@ -1,0 +1,143 @@
+.TH "Bone" 3 "Wed Jul 22 2020" "Version v0.1" "Lei2020" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+Bone
+.SH SYNOPSIS
+.br
+.PP
+.SS "Public Member Functions"
+
+.in +1c
+.ti -1c
+.RI "\fBBone\fP ()"
+.br
+.RI "Construct a new \fBBone\fP:: \fBBone\fP object\&. "
+.ti -1c
+.RI "\fBBone\fP (float start[3], float end[3], float \fBangle_in\fP, float \fBangle_vector_in\fP[3], float \fBangle_out\fP, float \fBangle_vector_out\fP[3], bool \fBfixed_in\fP, bool \fBfixed_out\fP)"
+.br
+.RI "Construct a new \fBBone\fP:: \fBBone\fP object\&. A \fBBone\fP is defined by 2 points, start and end point\&. "
+.ti -1c
+.RI "void \fBdraw_vecs\fP ()"
+.br
+.RI "Draw vector along with the bones, helps for visualisation\&. "
+.ti -1c
+.RI "void \fBdraw\fP ()"
+.br
+.RI "Draw the bone\&. "
+.ti -1c
+.RI "\fB~Bone\fP ()"
+.br
+.RI "Destroy the \fBBone\fP:: \fBBone\fP object\&. "
+.in -1c
+.SS "Public Attributes"
+
+.in +1c
+.ti -1c
+.RI "float \fBstart\fP [3]"
+.br
+.ti -1c
+.RI "float \fBend\fP [3]"
+.br
+.ti -1c
+.RI "float \fBsize\fP"
+.br
+.ti -1c
+.RI "float \fBoriginal_vec\fP [3]"
+.br
+.ti -1c
+.RI "float \fBoriginal_in\fP [3]"
+.br
+.ti -1c
+.RI "float \fBoriginal_out\fP [3]"
+.br
+.ti -1c
+.RI "float \fBangle_in\fP"
+.br
+.ti -1c
+.RI "float \fBangle_vector_in\fP [3]"
+.br
+.ti -1c
+.RI "float \fBangle_out\fP"
+.br
+.ti -1c
+.RI "float \fBangle_vector_out\fP [3]"
+.br
+.ti -1c
+.RI "bool \fBfixed_in\fP"
+.br
+.ti -1c
+.RI "bool \fBfixed_out\fP"
+.br
+.in -1c
+.SH "Constructor & Destructor Documentation"
+.PP 
+.SS "Bone::Bone ()"
+
+.PP
+Construct a new \fBBone\fP:: \fBBone\fP object\&. Same as fixed_in but for doing the out algorithm
+.SS "Bone::Bone (float in_start[3], float in_end[3], float angle_in, float angle_vector_in[3], float angle_out, float angle_vector_out[3], bool fixed_in, bool fixed_out)"
+
+.PP
+Construct a new \fBBone\fP:: \fBBone\fP object\&. A \fBBone\fP is defined by 2 points, start and end point\&. 
+.PP
+\fBParameters\fP
+.RS 4
+\fIin_start\fP Array with x,y,z coordinates defining position of start point 
+.br
+\fIin_end\fP Array with x,y,z coordinates defining position of end point 
+.br
+\fIangle_in\fP Limit of movement for the bone, in rad 
+.br
+\fIangle_vector_in\fP Vetor that defines the center of movement fot the bone 
+.br
+\fIangle_out\fP Same as angle_in but for when is doing the out algorith 
+.br
+\fIangle_vector_out\fP Same as angle_vector_in but for doing the out algorith 
+.br
+\fIfixed_in\fP Define if you what that the vetor rotate with the bone or stay the same 
+.br
+\fIfixed_out\fP Same as fixed_in but for doing the out algorithm 
+.RE
+.PP
+
+.SS "Bone::~Bone ()"
+
+.PP
+Destroy the \fBBone\fP:: \fBBone\fP object\&. 
+.SH "Member Function Documentation"
+.PP 
+.SS "void Bone::draw ()"
+
+.PP
+Draw the bone\&. 
+.SS "void Bone::draw_vecs ()"
+
+.PP
+Draw vector along with the bones, helps for visualisation\&. 
+.SH "Member Data Documentation"
+.PP 
+.SS "float Bone::angle_in"
+First out Vector 
+.SS "float Bone::angle_out"
+Vetor that defines the center of movement fot the bone 
+.SS "float Bone::angle_vector_in[3]"
+Limit of movement for the bone, in rad 
+.SS "float Bone::angle_vector_out[3]"
+Same as angle_in but for when is doing the out algorith 
+.SS "bool Bone::fixed_in"
+Same as angle_vector_in but for doing the out algorith 
+.SS "bool Bone::fixed_out"
+Define if you what that the vetor rotate with the bone or stay the same 
+.SS "float Bone::original_in[3]"
+First end-start Vector 
+.SS "float Bone::original_out[3]"
+First in Vector 
+.SS "float Bone::original_vec[3]"
+Lenght of the \fBBone\fP 
+.SS "float Bone::size"
+Array with x,y,z coordinates defining position of end point 
+
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for Lei2020 from the source code\&.

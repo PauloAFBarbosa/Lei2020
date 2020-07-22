@@ -1,0 +1,113 @@
+.TH "Skeleton.cpp" 3 "Wed Jul 22 2020" "Version v0.1" "Lei2020" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+Skeleton.cpp \- Skeleton class\&.  
+
+.SH SYNOPSIS
+.br
+.PP
+\fC#include 'skeleton\&.h'\fP
+.br
+\fC#include <GL/glut\&.h>\fP
+.br
+\fC#include <\&.\&./glm/glm\&.hpp>\fP
+.br
+\fC#include <\&.\&./glm/gtx/rotate_vector\&.hpp>\fP
+.br
+
+.SS "Functions"
+
+.in +1c
+.ti -1c
+.RI "void \fBcross_skel\fP (float *a, float *b, float *res)"
+.br
+.RI "Cross Multiplication\&. "
+.ti -1c
+.RI "void \fBnormalize_skel\fP (float *a)"
+.br
+.RI "Normalization of a vector\&. "
+.in -1c
+.SS "Variables"
+
+.in +1c
+.ti -1c
+.RI "bool \fBinwards\fP = true"
+.br
+.ti -1c
+.RI "bool \fBoutwards\fP = true"
+.br
+.ti -1c
+.RI "bool \fBrestrictions\fP = true"
+.br
+.ti -1c
+.RI "bool \fBvecs\fP = false"
+.br
+.ti -1c
+.RI "bool \fBdebugs\fP = false"
+.br
+.ti -1c
+.RI "float \fBobj_center_global\fP [3]"
+.br
+.ti -1c
+.RI "float \fBobj_size_global\fP"
+.br
+.in -1c
+.SH "Detailed Description"
+.PP 
+Skeleton class\&. 
+
+
+.PP
+\fBAuthor\fP
+.RS 4
+Paulo Barbosa, Francisco Lira and Joel Gama 
+.RE
+.PP
+\fBVersion\fP
+.RS 4
+0\&.1 
+.RE
+.PP
+\fBDate\fP
+.RS 4
+2020-07-20
+.RE
+.PP
+\fBCopyright\fP
+.RS 4
+Copyright (c) 2020 
+.RE
+.PP
+
+.SH "Function Documentation"
+.PP 
+.SS "void cross_skel (float * a, float * b, float * res)"
+
+.PP
+Cross Multiplication\&. 
+.PP
+\fBParameters\fP
+.RS 4
+\fIa\fP a[3] to be multiplied 
+.br
+\fIb\fP b[3] to be multiplied 
+.br
+\fIres\fP result of multiplication 
+.RE
+.PP
+
+.SS "void normalize_skel (float * a)"
+
+.PP
+Normalization of a vector\&. 
+.PP
+\fBParameters\fP
+.RS 4
+\fIa\fP vector to be normalized 
+.RE
+.PP
+
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for Lei2020 from the source code\&.

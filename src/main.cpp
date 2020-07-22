@@ -2,7 +2,7 @@
 #include <GLUT/glut.h>
 #else
 #include"Bone.h"
-#include"skeleton.h"
+#include"Skeleton.h"
 #include<GL/glut.h>
 
 #endif
@@ -12,7 +12,7 @@
 
 #define POINT_COUNT 5
 // Points that make up the loop for catmull-rom interpolation
-//braços
+//braï¿½os
 float p[POINT_COUNT][3] = { {0,-1,-2},{0,-2,-2},{0,-2,2} ,{0,-1,2},{0,0,0} };
 
 float p2[POINT_COUNT][3] = { {0,-1,2} ,{0,0,0} ,{0,-1,-2},{0,-2,-2},{0,-2,2}  };
@@ -22,7 +22,7 @@ float p4[POINT_COUNT][3] = { {0,-1,-2},{0,-2,-2},{0,-2,2} ,{0,-1,2},{0,0,0} };
 
 float p3[POINT_COUNT][3] = { {0,-1,2} ,{0,0,0} ,{0,-1,-2},{0,-2,-2},{0,-2,2} };
 
-//cabeça
+//cabeï¿½a
 float p5[POINT_COUNT][3] = { {0,5,-1},{2,0,3} ,{2,-0.5,3} ,{-2,-0.5,3},{-2,0,3} };
 
 int working = 0;
@@ -47,15 +47,26 @@ int winid = 0;
 int controlling;
 int qtargets;
 
+bool catdebug = true;
+bool catmullControlling = false;
+
 skeleton* targets[5];
 
+/**
+ * @brief return the length of v
+ * 
+ * @param v array[3] with the x,y,z dimensions
+ * @return float length of v
+ */
 float length_main(float* v) {
-
 	float res = sqrt(v[0] * v[0] + v[1] * v[1] + v[2] * v[2]);
 	return res;
-
 }
 
+/**
+ * @brief calculates the cam values (used in GluLookAt function) from the alteration of alfa, beta and radius
+ * 
+ */
 void spherical2Cartesian() {
 	camX = radius * cos(beta) * sin(alfa);
 	camY = radius * sin(beta);
@@ -94,13 +105,8 @@ void processKeys(unsigned char c, int xx, int yy) {
 		if (controlling < 0)
 			controlling = 0;
 		break;
-	case 'r':
-		up->changerestrictions();
-		down->changerestrictions();
-		break;
-	case 'o':
-		up->changeoutwards();
-		down->changeoutwards();
+	case 'c':
+		catmullControlling = !catmullControlling;
 		break;
 	case 27:
 		glutDestroyWindow(winid);
@@ -144,7 +150,6 @@ void processSpecialKeys(int key, int xx, int yy) {
 	glutPostRedisplay();
 }
 
-
 void changeSize(int w, int h) {
 	// Prevent a divide by zero, when window is too short
 	// (you cant make a window with zero width).
@@ -169,6 +174,10 @@ void changeSize(int w, int h) {
 	glMatrixMode(GL_MODELVIEW);
 }
 
+/**
+ * @brief draw an x,y,z axis for better visualization of scenario
+ * 
+ */
 void drawAxis() {
 	// red x
 	glColor3f(1.0, 0.0, 0.0); 
@@ -219,8 +228,13 @@ void drawAxis() {
 	glFlush();
 }
 
-
-
+/**
+ * @brief Multiply vector 1 and 2
+ * 
+ * @param v1 Vector 1
+ * @param v2 Vector 2
+ * @return float Result of multiplication
+ */
 float multvec(float* v1, float* v2) {
 	float res = 0;
 	for (int i = 0; i < 4; i++)
@@ -229,8 +243,15 @@ float multvec(float* v1, float* v2) {
 	}
 	return res;
 }
-void multMatrixVector(float* m, float* v, float* res) {
 
+/**
+ * @brief Multiplication between a vector and a matrix
+ * 
+ * @param m matrix with 4x4 dimentions
+ * @param v Vector with size 4
+ * @param res Vecttor with result of the multiplication
+ */
+void multMatrixVector(float* m, float* v, float* res) {
 	for (int j = 0; j < 4; ++j) {
 		res[j] = 0;
 		for (int k = 0; k < 4; ++k) {
@@ -239,13 +260,24 @@ void multMatrixVector(float* m, float* v, float* res) {
 	}
 }
 
+/**
+ * @brief Get the Catmull Rom Point object
+ * 
+ * @param t Value between [0,1]
+ * @param p0 
+ * @param p1 
+ * @param p2 
+ * @param p3 
+ * @param pos 
+ * @param deriv 
+ */
 void getCatmullRomPoint(float t, float* p0, float* p1, float* p2, float* p3, float* pos, float* deriv) {
 
 	// catmull-rom matrix
 	float m[4][4] = { {-0.5f,  1.5f, -1.5f,  0.5f},
-						{ 1.0f, -2.5f,  2.0f, -0.5f},
-						{-0.5f,  0.0f,  0.5f,  0.0f},
-						{ 0.0f,  1.0f,  0.0f,  0.0f} };
+					  { 1.0f, -2.5f,  2.0f, -0.5f},
+					  {-0.5f,  0.0f,  0.5f,  0.0f},
+					  { 0.0f,  1.0f,  0.0f,  0.0f} };
 	float vt[4] = { t * t * t,t * t,t,1 };
 	float dvt[4] = { 3 * t * t,2 * t,1,0 };
 	float p[4];
@@ -282,7 +314,13 @@ void getCatmullRomPoint(float t, float* p0, float* p1, float* p2, float* p3, flo
 	deriv[2] = dz;
 }
 
-// given  global t, returns the point in the curve
+/**
+ * @brief Get the Global Catmull Rom Point object based on global t
+ * 
+ * @param gt 
+ * @param pos 
+ * @param deriv 
+ */
 void getGlobalCatmullRomPoint(float gt, float* pos, float* deriv) {
 
 	float t = gt * POINT_COUNT; // this is the real global t
@@ -307,6 +345,10 @@ void getGlobalCatmullRomPoint(float gt, float* pos, float* deriv) {
 		getCatmullRomPoint(t, p5[indices[0]], p5[indices[1]], p5[indices[2]], p5[indices[3]], pos, deriv);
 }
 
+/**
+ * @brief Draw the Catmull curve, helps with visualisation
+ * 
+ */
 void renderCatmullRomCurve() {
 	glPushMatrix();
 	if(working==0)
@@ -336,13 +378,24 @@ void renderCatmullRomCurve() {
 	glPopMatrix();
 }
 
+/**
+ * @brief Cross product between vector a and b to calculate the res vector wich is perpendicular to the first two
+ * 
+ * @param a Vector to be multiplied
+ * @param b Vector to be multiplied
+ * @param res Perpendicular Vector to Vector 1 and 2
+ */
 void cross_main(float* a, float* b, float* res) {
-
 	res[0] = a[1] * b[2] - a[2] * b[1];
 	res[1] = a[2] * b[0] - a[0] * b[2];
 	res[2] = a[0] * b[1] - a[1] * b[0];
 }
 
+/**
+ * @brief Normalized Vetor
+ * 
+ * @param a 
+ */
 void normalize_main(float* a) {
 
 	float l = sqrt(a[0] * a[0] + a[1] * a[1] + a[2] * a[2]);
@@ -350,15 +403,6 @@ void normalize_main(float* a) {
 	a[1] = a[1] / l;
 	a[2] = a[2] / l;
 }
-
-void buildRotMatrix_main(float* x, float* y, float* z, float* m) {
-
-	m[0] = x[0]; m[1] = x[1]; m[2] = x[2]; m[3] = 0;
-	m[4] = y[0]; m[5] = y[1]; m[6] = y[2]; m[7] = 0;
-	m[8] = z[0]; m[9] = z[1]; m[10] = z[2]; m[11] = 0;
-	m[12] = 0; m[13] = 0; m[14] = 0; m[15] = 1;
-}
-
 
 void renderScene(void) {
 	static float t = 0;
@@ -381,7 +425,6 @@ void renderScene(void) {
 	gluLookAt(camX, camY, camZ,
 		0.0, 0.0, 0.0,
 		0.0f, 1.0f, 0.0f);
-
 	
 	glPushMatrix();
 	if (controlling == 0)
@@ -424,19 +467,16 @@ void renderScene(void) {
 	glPopMatrix();
 
 	glColor3f(0.0f, 0.0f, 1.0f);
-	bool controlling = false;
 
-	if (controlling == false) {
+	if (catmullControlling == false) {
 		//carmull
 		working = 0;
 		{
 			glPushMatrix();
-			//renderCatmullRomCurve();
+			if(catdebug) renderCatmullRomCurve();
 			getGlobalCatmullRomPoint(t, pos, der);
 
 			glTranslatef(pos[0], pos[1], pos[2]);
-
-
 
 			targets[3]->target[0] = pos[0] - 1;
 			targets[3]->target[1] = pos[1] - 5;
@@ -447,11 +487,10 @@ void renderScene(void) {
 		working = 1;
 		{
 			glPushMatrix();
-			//renderCatmullRomCurve();
+			if (catdebug) renderCatmullRomCurve();
 			getGlobalCatmullRomPoint(t, pos, der);
 
 			glTranslatef(pos[0], pos[1], pos[2]);
-
 
 			targets[4]->target[0] = pos[0] + 1;
 			targets[4]->target[1] = pos[1] - 5;
@@ -462,11 +501,10 @@ void renderScene(void) {
 		working = 2;
 		{
 			glPushMatrix();
-			//renderCatmullRomCurve();
+			if (catdebug) renderCatmullRomCurve();
 			getGlobalCatmullRomPoint(t, pos, der);
 
 			glTranslatef(pos[0], pos[1], pos[2]);
-
 
 			targets[1]->target[0] = pos[0] - 1.2;
 			targets[1]->target[1] = pos[1];
@@ -477,11 +515,10 @@ void renderScene(void) {
 		working = 3;
 		{
 			glPushMatrix();
-			//renderCatmullRomCurve();
+			if (catdebug) renderCatmullRomCurve();
 			getGlobalCatmullRomPoint(t, pos, der);
 
 			glTranslatef(pos[0], pos[1], pos[2]);
-
 
 			targets[2]->target[0] = pos[0] + 1.2;
 			targets[2]->target[1] = pos[1];
@@ -528,8 +565,6 @@ void renderScene(void) {
    
 	drawAxis();
 
-	//draw object
-
 	glPushMatrix();
 	
 	glColor3f(1.0f, 1.0f, 1.0f);
@@ -552,7 +587,6 @@ int main(int argc, char** argv) {
 	//skeleton points
 	float start[3] = { 0,0,0 };
 
-	
 	float up1[3] = { 0,2,0 };
 	float up2[3] = { 0,3,0 };
 	float up3[3] = { 0,4,0 };
@@ -565,7 +599,6 @@ int main(int argc, char** argv) {
 	float up10[3] = { 1.2,-1,0 };
 	float up11[3] = { 0,4.5,1 };
 	
-
 	float down1[3] = { 0,-2,0 };
 	float down2[3] = { -1,-2,0 };
 	float down3[3] = { -1,-4,0 };
@@ -584,20 +617,19 @@ int main(int argc, char** argv) {
 
 	float angle_vector_null[3] = { 0,0,0 };
 
-	
 	//Parte superior
 	up = new skeleton(start, up1,0.01, angle_pernas_down, 0.01, angle_pernas_up,true,true);
 	//Tronco
 	up->addChildren(up2, 0.1, angle_pernas_down, 0.1, angle_pernas_up, true, true);
-	//Cabeça
+	//Cabeï¿½a
 	up->children.at(0)->addChildren(up3, 0.1, angle_pernas_down, 0.1, angle_pernas_up, true, true);
 	up->children.at(0)->children.at(0)->addChildren(up4, 0.4, angle_pernas_down, 0.4, angle_pernas_up, true, true);
 	up->children.at(0)->children.at(0)->children.at(0)->addChildren(up11, 1.58, angle_pernas_back, 1.58, angle_pernas_front, true, true);
-	//braço 1
+	//braï¿½o 1
 	up->children.at(0)->addChildren(up5, 0.01, angle_pernas_right, 0.2, angle_pernas_left, true, true);
 	up->children.at(0)->children.at(1)->addChildren(up6, 1.80, angle_pernas_front, 1.80, angle_pernas_back, true, true);
 	up->children.at(0)->children.at(1)->children.at(0)->addChildren(up7, 1.58, angle_pernas_back, 1.58, angle_pernas_front, false, false);
-	//braço 2
+	//braï¿½o 2
 	up->children.at(0)->addChildren(up8, 0.2, angle_pernas_left, 0.2, angle_pernas_right, true, true);
 	up->children.at(0)->children.at(2)->addChildren(up9, 1.80, angle_pernas_front, 1.80, angle_pernas_back, true, true);
 	up->children.at(0)->children.at(2)->children.at(0)->addChildren(up10, 1.58, angle_pernas_back, 1.58, angle_pernas_front, false, false);
@@ -614,9 +646,9 @@ int main(int argc, char** argv) {
 	down->children.at(1)->children.at(0)->addChildren(down7, 1.58, angle_pernas_front, 1.58, angle_pernas_back, false, false);
 
 	//Targets
-	up->children.at(0)->children.at(0)->children.at(0)->children.at(0)->setTarget(0, 4.5, 1);//Cabeça
-	up->children.at(0)->children.at(1)->children.at(0)->children.at(0)->setTarget(-1.2, -1, 0);//Braço 1
-	up->children.at(0)->children.at(2)->children.at(0)->children.at(0)->setTarget(1.2, -1, 0);//Braço 2
+	up->children.at(0)->children.at(0)->children.at(0)->children.at(0)->setTarget(0, 4.5, 1);//Cabeï¿½a
+	up->children.at(0)->children.at(1)->children.at(0)->children.at(0)->setTarget(-1.2, -1, 0);//Braï¿½o 1
+	up->children.at(0)->children.at(2)->children.at(0)->children.at(0)->setTarget(1.2, -1, 0);//Braï¿½o 2
 
 	down->children.at(0)->children.at(0)->children.at(0)->setTarget(-1, -6, 0);
 	down->children.at(1)->children.at(0)->children.at(0)->setTarget(1, -6, 0);
@@ -627,7 +659,6 @@ int main(int argc, char** argv) {
 
 	targets[3] = down->children.at(0)->children.at(0)->children.at(0);
 	targets[4] = down->children.at(1)->children.at(0)->children.at(0);
-
 
 	// put GLUT init here
 	glutInit(&argc, argv);
@@ -644,7 +675,6 @@ int main(int argc, char** argv) {
 	glutKeyboardFunc(processKeys);
 	glutSpecialFunc(processSpecialKeys);
 
-
 	// OpenGL settings 
 	glEnable(GL_DEPTH_TEST);
 	glEnable(GL_CULL_FACE);
@@ -655,4 +685,3 @@ int main(int argc, char** argv) {
 
 	return 1;
 }
-

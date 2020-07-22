@@ -39,7 +39,7 @@ Bone::Bone() {
  * @param in_start Array with x,y,z coordinates defining position of start point
  * @param in_end Array with x,y,z coordinates defining position of end point
  * @param angle_in Limit of movement for the bone, in rad
- * @param angle_vector_in Vetor that defines the center of movement fot the bone
+ * @param angle_vector_in Vetor that defines the center of movement for the bone
  * @param angle_out Same as angle_in but for when is doing the out algorith
  * @param angle_vector_out Same as angle_vector_in but for doing the out algorith
  * @param fixed_in Define if you what that the vetor rotate with the bone or stay the same

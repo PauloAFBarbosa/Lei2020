@@ -17,15 +17,17 @@
 class skeleton
 {
 public:
+	/** Pointer for children skeleton */
 	std::vector<skeleton*> children;
+	/** x,y,z coordinates for the target of a skeleton */
 	float target[3];
+	/** Pointer for the Bone that defines this part of skeleton */
 	Bone* me;
+	/** Pointer for parent Skeleton */
 	skeleton* parent;
 
 	skeleton* copy();
 
-	void changeinwards();
-	void changeoutwards();
 	void changerestrictions();
 
 	void addChildren(float in_end[3],float angle_in,float angle_vector_in[3], float angle_out, float angle_vector_out[3], bool fixed_in, bool fixed_out);
@@ -41,7 +43,6 @@ public:
 	void update_vec(Bone* b);
 	void update(float target[3], float* return_effector);
 	
-
 	void applyRestrictions(float firstVecX, float firstVecY, float firstVecZ);
 	void rotate(float original[3], float from[3], float to[3], float angle, float res[3]);
 	void restrictions_in(float vector[3], std::vector<skeleton*> chain, int i, std::vector<float>* positions);
@@ -53,8 +54,6 @@ public:
 	void multiUpdateOut(float originalX, float originalY, float originalZ);
 
 	void multiUpdate(skeleton* targets[4], float obj_center[3],float obj_size);
-
-
 
 	//void multiUpdate();
 	void getSubRoots(std::vector<skeleton*>* subRoots);
